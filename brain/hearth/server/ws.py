@@ -60,6 +60,7 @@ class BridgeServer:
         try:
             await ws.send(json.dumps(self.engine.world_init_message()))
             await ws.send(json.dumps(self.engine.world.snapshot()))
+            await ws.send(json.dumps(self.engine.visitor_state()))
             async for raw in ws:
                 try:
                     msg = json.loads(raw)
@@ -74,9 +75,18 @@ class BridgeServer:
                     asyncio.create_task(self._talk(msg.get("agent", ""), msg.get("text", "")))
                 elif msg.get("type") == "talk_end":
                     await self.engine.end_talk(msg.get("agent", ""))
+                elif msg.get("type") == "visitor_gather":
+                    await self.engine.visitor_gather(msg.get("location", ""))
+                    self._send_all(self.engine.visitor_state())
+                elif msg.get("type") == "visitor_deposit":
+                    await self.engine.visitor_deposit()
+                    self._send_all(self.engine.visitor_state())
                 elif msg.get("type") == "arrived":
                     pass  # brain owns movement for now; see PROTOCOL.md
         except Exception as e:  # connection closed etc.
             log.debug("client dropped: %s", e)
         finally:
             self.clients.discard(ws)
+            if self.engine.cfg.exit_with_client and not self.clients:
+                log.info("viewer disconnected; stopping (exit-with-client)")
+                self.engine.stopped = True

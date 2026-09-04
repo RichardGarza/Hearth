@@ -50,6 +50,8 @@ class Engine:
     drain_hooks: list[Callable[[], Awaitable[None]]] = field(default_factory=list)  # e.g. wait for TTS
     agents: dict[str, AgentRuntime] = field(default_factory=dict)
     ai_agents: set[str] = field(default_factory=set)   # ids driven by a real model (shown as AI in Unreal)
+    visitor_inventory: dict[str, int] = field(default_factory=dict)   # what the player is carrying
+    visitor_last: str = ""
     paused: bool = False
     stopped: bool = False
 
@@ -316,6 +318,43 @@ class Engine:
         rt.memory.remember(f"[{self.world.clock.label()}] The visitor walked away.")
         if st.current is not None and st.current.type == ActionType.WAIT:
             st.busy_until = self.world.clock.tick   # decide again next tick
+
+    # ------------------------------------------------------------------ the visitor (player) gathering
+    PRIMARY_RESOURCE = {"forest": "wood", "river": "fish", "meadow": "berries", "quarry": "stone"}
+
+    def visitor_state(self) -> dict[str, Any]:
+        return {"type": "visitor_state", "inventory": dict(self.visitor_inventory), "last": self.visitor_last}
+
+    async def visitor_gather(self, location_id: str) -> str | None:
+        """The player stood at a resource place long enough: hand over one unit of its main resource."""
+        loc = self.world.location_by_name(location_id)
+        res = self.PRIMARY_RESOURCE.get(loc.id) if loc else None
+        if not loc or not res:
+            self.visitor_last = "There's nothing to gather here."
+            return None
+        if loc.resources.get(res, 0) <= 0:
+            self.visitor_last = f"No {res} left at the {loc.name}."
+            return None
+        loc.resources[res] -= 1
+        self.visitor_inventory[res] = self.visitor_inventory.get(res, 0) + 1
+        self.visitor_last = f"+1 {res} (carrying {self.visitor_inventory[res]})"
+        await self._publish_and_remember([Event(kind=EventKind.ACTION, location=loc.id, tick=self.world.clock.tick,
+                                                text=f"The visitor gathers {res} at the {loc.name}.")])
+        return res
+
+    async def visitor_deposit(self) -> dict[str, int]:
+        moved = {k: v for k, v in self.visitor_inventory.items() if v > 0}
+        if not moved:
+            return {}
+        camp = self.world.camp
+        for k, v in moved.items():
+            camp.stockpile[k] = camp.stockpile.get(k, 0) + v
+        self.visitor_inventory = {}
+        desc = ", ".join(f"{v} {k}" for k, v in moved.items())
+        self.visitor_last = f"Dropped off {desc} at camp."
+        await self._publish_and_remember([Event(kind=EventKind.ACTION, location=camp.id, tick=self.world.clock.tick,
+                                                text=f"The visitor puts {desc} into the camp stockpile.")])
+        return moved
 
     # ------------------------------------------------------------------ god mode
     async def command(self, name: str, **kw: Any) -> str:

@@ -1,0 +1,1 @@
+Below are your recent memories. Compress them into 3-5 short lines of notes to yourself: what you've learned about this place, what you've agreed with people, who you trust or worry about, and what still needs doing. Write in first person, plainly. Output only the notes, one per line.

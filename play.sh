@@ -13,9 +13,11 @@ ROOT="$(cd "$(dirname "$0")" && pwd)"
 UE="/Users/Shared/Epic Games/UE_5.8"
 BRAIN_ARGS=(--brain ollama --ai-agents jonah --voice say --tick-seconds 6 --quiet)
 if [[ $# -gt 0 ]]; then BRAIN_ARGS=("$@"); fi
+BRAIN_ARGS+=(--exit-with-client)   # brain shuts itself down when the game disconnects
 
 cleanup() {
-  pkill -f "python -m hearth run" 2>/dev/null
+  # the interpreter is called "Python" (capital P) on this Mac, so match on the module args only
+  pkill -f "hearth run" 2>/dev/null
   pkill -x say 2>/dev/null
   echo "brain stopped."
 }

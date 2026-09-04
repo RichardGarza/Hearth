@@ -20,6 +20,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Hearth") float WalkSpeed = 380.f;
 	UPROPERTY(EditAnywhere, Category = "Hearth") float RunSpeed = 720.f;
 
+	/** Cheat: dance and hump the air for a few seconds. */
+	UFUNCTION(BlueprintCallable, Category = "Hearth") void StartDance(float Seconds);
+
 protected:
 	UPROPERTY(VisibleAnywhere, Category = "Hearth") TObjectPtr<USpringArmComponent> Boom;
 	UPROPERTY(VisibleAnywhere, Category = "Hearth") TObjectPtr<UCameraComponent> Camera;
@@ -40,5 +43,9 @@ protected:
 	void StopRun();
 	void Turn(float Value);
 	void LookUp(float Value);
-	float LookEnabledAt = 0.f;   // ignore mouse deltas for the first moment (initial capture jumps)
+	float LookEnabledAt = 0.f;   // ignore mouse deltas for a moment after the window first takes focus
+	bool bSeenFocus = false;
+	float DanceUntil = 0.f;
+	FVector MeshBaseOffset = FVector::ZeroVector;
+	void TickDance(float Now);
 };

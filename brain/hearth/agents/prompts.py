@@ -1,38 +1,29 @@
-"""System prompt. Keep it stable — it is cached across every call for every agent's persona block.
+"""Prompts. The text lives in brain/prompts/*.md so it can be edited without touching code.
 
-Structure: [WORLD_RULES (shared, cached)] + [persona sheet (per agent, cached)]
+Structure of the system prompt: [WORLD_RULES (shared, cached)] + [persona sheet (per agent, cached)]
 """
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from hearth.agents.persona import Persona
 from hearth.world.actions import ACTION_DESCRIPTIONS
 
-WORLD_RULES = """You are a person living in a small valley with a handful of others. You are not an AI, not an assistant. You are this person, and you want to live.
+PROMPT_DIR = Path(__file__).resolve().parents[2] / "prompts"
 
-THE SITUATION
-Six of you woke up in this valley with nothing. There is a camp with a fire pit. There is a forest with wood, a river with water and fish, a meadow with berries, and a quarry with stone. Nights are cold. Rain and storms come. If the fire goes out at night people get cold. If nobody builds the shelter, rain and cold will wear everyone down. Nobody can do everything alone: gathering takes time, walking takes time, and a person who never eats or drinks or sleeps will die.
 
-WHAT MATTERS
-- Your body: hunger, thirst, energy, warmth. Let any of them hit zero and your health drains. At zero health you die. Others can die too, and they will if the group doesn't look after each other.
-- The fire: it only burns while it has wood. Someone has to keep bringing wood.
-- The shelter: takes several work sessions, each needing 1 wood and 1 stone. Once built, camp is much safer at night and in rain.
-- The stockpile at camp: shared. Put things in it so others can use them.
+def _load(name: str) -> str:
+    return (PROMPT_DIR / name).read_text(encoding="utf-8").strip()
 
-HOW TO BEHAVE
-- Talk like a real person in a real situation. Short. Specific. Say what you're doing, ask for what you need, notice how others are doing. Don't narrate your inner state in flowery language.
-- Only people at your location hear you. If you want to tell someone something, be where they are.
-- Coordinate. Divide work. Make and keep small agreements ("I'll get wood, you get water, back by dark"). Check on people who have been gone a long time.
-- You don't have to speak every time. Silence is fine when there's nothing to say or nobody is around. Do not repeat what you already said.
-- Act on your own needs before they become emergencies. Drink when you're at the river. Eat when you're hungry and food is there. Sleep at night, at camp, ideally with the fire lit.
-- Stay in character. You have a personality, a history, and private worries. Let them show in how you talk and what you prioritize, but survival comes first.
 
-ACTIONS YOU CAN TAKE (exactly one per decision)
-""" + "\n".join(f"- {a.value}: {d}" for a, d in ACTION_DESCRIPTIONS.items()) + """
-
-PLACES: Camp, Forest, River, Meadow, Quarry. RESOURCES: wood, water, berries, fish, stone.
-
-Respond with a JSON object: {thought, say, action, plan}. `say` is null if you stay quiet. `plan` is a short note to yourself about what you intend next."""
+_ACTIONS = "\n".join(f"- {a.value}: {d}" for a, d in ACTION_DESCRIPTIONS.items())
+_world = _load("world_rules.md")
+WORLD_RULES = _world.replace("{ACTIONS}", _ACTIONS) if "{ACTIONS}" in _world else \
+    _world + "\n\nACTIONS YOU CAN TAKE (exactly one per decision)\n" + _ACTIONS
+CONVERSE_RULES = _load("converse_rules.md")
+REFLECTION_PROMPT = _load("reflection.md")
+LOCAL_MODEL_HINT = _load("local_model_hint.md")
 
 
 def system_blocks(persona: Persona) -> list[dict]:
@@ -41,9 +32,3 @@ def system_blocks(persona: Persona) -> list[dict]:
         {"type": "text", "text": WORLD_RULES, "cache_control": {"type": "ephemeral"}},
         {"type": "text", "text": "WHO YOU ARE\n" + persona.sheet(), "cache_control": {"type": "ephemeral"}},
     ]
-
-
-REFLECTION_PROMPT = """Below are your recent memories. Compress them into 3-5 short lines of notes to yourself: what you've learned about this place, what you've agreed with people, who you trust or worry about, and what still needs doing. Write in first person, plainly. Output only the notes, one per line."""
-
-
-CONVERSE_RULES = """A visitor — someone not from the valley, who can see and hear you — has walked up and is talking to you. Answer them as yourself, out loud, in one to three sentences. Stay in character and in your situation: you are tired, busy, worried about real things. You can ask them questions, ask for help, or tell them to get lost, depending on who you are and what you're dealing with. Do not describe actions or use stage directions; only say words. Do not open with a greeting, thanks, or "wait" after the first exchange; just answer. Never start two replies the same way."""

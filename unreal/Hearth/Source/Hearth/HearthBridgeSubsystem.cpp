@@ -122,6 +122,21 @@ void UHearthBridgeSubsystem::SendTalkEnd(const FString& AgentId)
 	SendJson(Obj);
 }
 
+void UHearthBridgeSubsystem::SendVisitorGather(const FString& LocationId)
+{
+	TSharedRef<FJsonObject> Obj = MakeShared<FJsonObject>();
+	Obj->SetStringField(TEXT("type"), TEXT("visitor_gather"));
+	Obj->SetStringField(TEXT("location"), LocationId);
+	SendJson(Obj);
+}
+
+void UHearthBridgeSubsystem::SendVisitorDeposit()
+{
+	TSharedRef<FJsonObject> Obj = MakeShared<FJsonObject>();
+	Obj->SetStringField(TEXT("type"), TEXT("visitor_deposit"));
+	SendJson(Obj);
+}
+
 // ---------------------------------------------------------------- socket callbacks
 
 void UHearthBridgeSubsystem::HandleConnected()
@@ -179,6 +194,17 @@ void UHearthBridgeSubsystem::HandleMessage(const FString& Message)
 		FString To;
 		Obj->TryGetStringField(TEXT("to"), To);
 		OnSpeech.Broadcast(Obj->GetStringField(TEXT("agent")), To, Obj->GetStringField(TEXT("text")));
+	}
+	else if (Type == TEXT("visitor_state"))
+	{
+		const TSharedPtr<FJsonObject>* Inv = nullptr;
+		if (Obj->TryGetObjectField(TEXT("inventory"), Inv))
+		{
+			ParseIntMap(*Inv, VisitorInventory);
+		}
+		FString Last;
+		Obj->TryGetStringField(TEXT("last"), Last);
+		OnVisitorState.Broadcast(Last);
 	}
 	else if (Type == TEXT("reply"))
 	{

@@ -45,6 +45,7 @@ class Config:
     ws_host: str = "127.0.0.1"
     ws_port: int = field(default_factory=lambda: int(_env("HEARTH_WS_PORT", "8765")))
     ws_enabled: bool = True
+    exit_with_client: bool = False   # stop the brain when the last viewer (Unreal) disconnects
 
     # --- Logging ---
     log_dir: Path = field(default_factory=lambda: Path(__file__).resolve().parents[2] / "logs")

@@ -69,12 +69,15 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked (s
 - [x] Visitor: third-person walker, WASD + mouse, Shift to run, no flying; camera placed near camp on load
 - [x] ESC menu: Resume, Quit to Desktop, look-sensitivity slider (saved)
 - [x] `play.sh`: one command; when the game closes the brain is killed so the voices stop
-- [ ] Richard confirms: Quit closes the game, sensitivity feels right, animations look right
+- [x] Round 3 (Richard): sensitivity 1–10 slider in 0.5 steps (bigger, styled); world ringed by a tree wall (no drop-off); layered conifers; you gather at places (10 s) and auto-drop at camp; Jonah in a forest-green suit; chat box keeps focus after Enter; launcher kill bug fixed (process is `Python` not `python`) + brain exits when the game disconnects; the AI's instructions moved to editable files in `brain/prompts/`
+- [x] Round 4: ENTER talks, SPACE jumps, `hump` cheat (6 s dance), look guard armed on first window focus (camera was spinning toward the quarry on start), carry HUD shows from the start
+- [ ] Richard confirms rounds 3–4 in play
+- [ ] Photorealistic trees: needs real assets — install Quixel/Megascans trees from Fab (free with an Epic account) and point `build_valley_map.py` at them
 - [ ] Day/night via directional light driven by sim time
 - [ ] Visual state: campfire flame + light when lit (light exists), shelter mesh growing with progress, rain
 - [ ] Replace mannequins with six distinct characters. Sources Richard picked (2026-09-04):
   - Fab, Epic Games seller: https://www.fab.com/sellers/Epic%20Games?listing_types=3d-model&categories=characters-creatures — **prefer these** (rigged to the UE5 skeleton; our clips work as-is)
-  - Sketchfab: https://sketchfab.com/tags/blender — check license; needs retargeting
+  - Sketchfab: https://sketchfab.com/ (Richard's general reference) and https://sketchfab.com/tags/blender — check license; needs retargeting
 - [ ] In-world audio: play each line at the speaking character's position instead of the Mac speaker
 
 ### Phase 3b — Talk to them — DONE
@@ -152,6 +155,7 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked (s
 | 2026-09-04 morning | Plan, docs, Python brain (world, agents, voices, bridge), Unreal C++ scaffold written blind. 14 tests. Git init. |
 | 2026-09-04 afternoon | Xcode + UE 5.8 + Metal Toolchain installed. Module compiles. Valley map via Python commandlet. Headless brain→Unreal run passes. Mannequin bodies. GitHub repo (private). EOS secret scrubbed from history. |
 | 2026-09-04 evening | Richard: "do we need AI/talking?" → local AI on one character. Ollama brain, mixed routing, talk protocol, SPACE-to-talk dialogue in Unreal. 17 tests. |
+| 2026-09-05 early | Round 3: slider 1–10, tree wall, gathering, green Jonah, chat focus, launcher kill fix + exit-with-client, prompts as files. 21 tests. Map: 1,500 props. |
 | 2026-09-04 night | Richard's feedback rounds: walking visitor, ESC menu + Quit, props, T-pose fix, mouse jump guard, Manny/Quinn bodies, sensitivity slider, chatter throttle, `play.sh`. 19 tests. Second scanner incident (editor-written token) purged. |
 
 ---

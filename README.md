@@ -28,10 +28,12 @@ You'll hear the six of them start talking.
 ```
 Starts the brain (Jonah on a local model via Ollama, everyone else scripted, voices on) and opens the
 game. You walk as a third-person character: **WASD** + mouse, **Shift** to run. Jonah is marked
-`[ AI ]` with a cyan glow; walk up to him, press **SPACE**, type, **ESC** to walk away. **ESC**
+`[ AI ]` with a cyan glow; walk up to him, press **ENTER**, type, **ESC** to walk away. **SPACE** jumps. **ESC**
 anywhere else opens the menu; **Quit** closes the game *and* the brain, so the voices stop.
 
 `./play.sh --brain scripted` runs with no AI at all.
+
+**Edit the AI's instructions** in `brain/prompts/` (`world_rules.md`, `personas.toml`, ...). Restart to apply.
 
 ## Real agents
 

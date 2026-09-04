@@ -81,6 +81,22 @@ While a conversation is open the character stops and waits. If the visitor is si
 brain ends it. Each `talk` produces a `reply` frame (below) and a normal `speech` frame (so it's spoken
 aloud and heard by anyone standing there).
 
+### `visitor_gather` / `visitor_deposit` (the player picking things up)
+```json
+{"type": "visitor_gather", "location": "river"}
+{"type": "visitor_deposit"}
+```
+Unreal owns the timing (stand at a place ~10 s → `visitor_gather`; arrive at camp carrying something →
+`visitor_deposit`). The brain owns the inventory: it takes one unit of the place's main resource
+(forest wood, river fish, meadow berries, quarry stone) if any is left, and moves everything into the
+camp stockpile on deposit. People nearby see it happen. The brain answers with:
+
+### `visitor_state`
+```json
+{"type": "visitor_state", "inventory": {"fish": 2}, "last": "+1 fish (carrying 2)"}
+```
+Also sent once on connect.
+
 ### `arrived` (optional; Unreal tells the brain a character physically reached its target)
 ```json
 {"type": "arrived", "agent": "mara", "location": "camp"}

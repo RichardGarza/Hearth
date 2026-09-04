@@ -75,6 +75,7 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--ticks", type=int, default=None, help="stop after N ticks (default: run forever)")
     r.add_argument("--tick-seconds", type=float, default=None, help="real seconds per tick (default 3; 0 = max speed)")
     r.add_argument("--no-ws", action="store_true", help="don't start the WebSocket bridge")
+    r.add_argument("--exit-with-client", action="store_true", help="stop when the game/viewer disconnects (used by play.sh)")
     r.add_argument("--port", type=int, default=None)
     r.add_argument("--seed", type=int, default=None)
     r.add_argument("--model", default=None)
@@ -108,6 +109,7 @@ async def run(args: argparse.Namespace) -> int:
         cfg.ollama_model = args.ollama_model
     cfg.voice_backend = args.voice
     cfg.ws_enabled = not args.no_ws
+    cfg.exit_with_client = args.exit_with_client
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s", stream=sys.stderr)
     logging.getLogger("websockets").setLevel(logging.WARNING)

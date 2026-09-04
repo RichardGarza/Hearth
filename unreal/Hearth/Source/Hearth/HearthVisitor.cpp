@@ -7,6 +7,9 @@
 #include "UObject/ConstructorHelpers.h"
 #include "HearthAnim.h"
 #include "HearthPlayerController.h"
+#include "Engine/Engine.h"
+#include "Engine/GameViewportClient.h"
+#include "UnrealClient.h"
 
 AHearthVisitor::AHearthVisitor()
 {
@@ -19,8 +22,8 @@ AHearthVisitor::AHearthVisitor()
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 540.f, 0.f);
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
-	GetCharacterMovement()->JumpZVelocity = 0.f;      // no jumping, no flying
-	GetCharacterMovement()->AirControl = 0.f;
+	GetCharacterMovement()->JumpZVelocity = 480.f;    // SPACE jumps (when not next to an AI person)
+	GetCharacterMovement()->AirControl = 0.25f;
 	GetCharacterMovement()->GravityScale = 1.f;
 
 	Boom = CreateDefaultSubobject<USpringArmComponent>(TEXT("Boom"));
@@ -47,7 +50,23 @@ AHearthVisitor::AHearthVisitor()
 void AHearthVisitor::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-	UpdateLocomotionAnim();
+	const float Now = GetWorld()->GetTimeSeconds();
+	// The macOS game window can deliver one giant mouse delta the moment it first takes focus.
+	// Arm the look guard from that moment, not from BeginPlay.
+	if (!bSeenFocus && GEngine && GEngine->GameViewport && GEngine->GameViewport->Viewport
+		&& GEngine->GameViewport->Viewport->HasFocus())
+	{
+		bSeenFocus = true;
+		LookEnabledAt = Now + 0.75f;
+	}
+	if (DanceUntil > 0.f)
+	{
+		TickDance(Now);
+	}
+	else
+	{
+		UpdateLocomotionAnim();
+	}
 }
 
 void AHearthVisitor::UpdateLocomotionAnim()
@@ -88,6 +107,41 @@ void AHearthVisitor::BeginPlay()
 {
 	Super::BeginPlay();
 	LookEnabledAt = GetWorld()->GetTimeSeconds() + 1.0f;
+	MeshBaseOffset = GetMesh()->GetRelativeLocation();
+}
+
+void AHearthVisitor::StartDance(float Seconds)
+{
+	DanceUntil = GetWorld()->GetTimeSeconds() + Seconds;
+}
+
+void AHearthVisitor::TickDance(float Now)
+{
+	USkeletalMeshComponent* M = GetMesh();
+	if (Now < DanceUntil)
+	{
+		// pelvic thrust forward + bob + a slow spin, legs pumping via the jog clip
+		const float T = DanceUntil - Now;
+		const float Thrust = FMath::Max(0.f, FMath::Sin(Now * 9.f)) * 32.f;
+		const float Bob = FMath::Abs(FMath::Sin(Now * 4.5f)) * 8.f;
+		M->SetRelativeLocation(MeshBaseOffset + FVector(Thrust, 0.f, Bob));
+		M->SetRelativeRotation(FRotator(0.f, -90.f, -12.f + 8.f * FMath::Sin(Now * 9.f)));
+		AddActorWorldRotation(FRotator(0.f, 70.f * GetWorld()->GetDeltaSeconds(), 0.f));
+		if (JogAnim && M->GetSingleNodeInstance() && M->GetSingleNodeInstance()->GetAnimationAsset() != JogAnim)
+		{
+			M->PlayAnimation(JogAnim, true);
+			AnimState = 2;
+		}
+		M->SetPlayRate(1.6f);
+		(void)T;
+	}
+	else if (DanceUntil > 0.f)
+	{
+		DanceUntil = 0.f;
+		M->SetRelativeLocation(MeshBaseOffset);
+		M->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
+		AnimState = -1;   // let the locomotion driver pick the right clip again
+	}
 }
 
 // Mouse look with two guards: nothing for the first second (the window's initial mouse capture on
@@ -101,13 +155,13 @@ static float LookScale(const APawn* P)
 
 void AHearthVisitor::Turn(float Value)
 {
-	if (GetWorld()->GetTimeSeconds() < LookEnabledAt || FMath::Abs(Value) > 40.f) { return; }
+	if (!bSeenFocus || GetWorld()->GetTimeSeconds() < LookEnabledAt || FMath::Abs(Value) > 30.f) { return; }
 	AddControllerYawInput(Value * LookScale(this));
 }
 
 void AHearthVisitor::LookUp(float Value)
 {
-	if (GetWorld()->GetTimeSeconds() < LookEnabledAt || FMath::Abs(Value) > 40.f) { return; }
+	if (!bSeenFocus || GetWorld()->GetTimeSeconds() < LookEnabledAt || FMath::Abs(Value) > 30.f) { return; }
 	AddControllerPitchInput(Value * LookScale(this));
 }
 

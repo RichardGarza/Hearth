@@ -11,7 +11,7 @@ Safe to re-run: it overwrites the level.
 import unreal
 
 MAP_PATH = "/Game/Maps/Valley"
-GROUND_SIZE_M = 240          # the brain's valley is ~100 m across at meters_to_units=10
+GROUND_SIZE_M = 320          # the brain's valley is ~100 m across at meters_to_units=10; extra is the tree wall
 GROUND_UNITS = GROUND_SIZE_M * 100
 
 log = unreal.log
@@ -94,6 +94,7 @@ M = {
     "sand": make_material("M_Sand", (0.55, 0.48, 0.30)),
     "berry": make_material("M_Berry", (0.35, 0.08, 0.12)),
     "ember": make_material("M_Ember", (0.9, 0.35, 0.05), roughness=0.6),
+    "leaf_dark": make_material("M_LeafDark", (0.04, 0.15, 0.05)),
 }
 cosmetic(lambda: ground_mesh.set_material(0, M["grass"]), "ground grass material")
 
@@ -119,9 +120,14 @@ def prop(shape, loc, scale, mat, yaw=0.0, label="Prop"):
     return a
 
 def tree(x, y, size=1.0):
-    h = 320 * size
-    prop("cyl", (x, y, h / 2), (0.28 * size, 0.28 * size, h / 100), M["bark"], label="Tree_Trunk")
-    prop("cone", (x, y, h + 30), (2.6 * size, 2.6 * size, 4.2 * size), M["leaf"], yaw=rng.uniform(0, 360), label="Tree_Canopy")
+    """Layered conifer: tapered trunk + three stacked canopy tiers, slight lean, two leaf tones."""
+    h = 340 * size
+    yaw = rng.uniform(0, 360)
+    leaf = M["leaf"] if rng.random() < 0.6 else M["leaf_dark"]
+    trunk = prop("cone", (x, y, 0), (0.55 * size, 0.55 * size, h / 50), M["bark"], yaw=yaw, label="Tree_Trunk")
+    for i, (z, r) in enumerate(((0.35, 3.0), (0.58, 2.3), (0.80, 1.5))):
+        prop("cone", (x + rng.uniform(-8, 8), y + rng.uniform(-8, 8), h * z), (r * size, r * size, 2.4 * size), leaf,
+             yaw=yaw + i * 40, label="Tree_Canopy")
 
 def ring(cx, cy, r_min, r_max, n):
     for _ in range(n):
@@ -134,6 +140,15 @@ def ring(cx, cy, r_min, r_max, n):
 fx, fy = LOC["forest"]
 for x, y in ring(fx, fy, 520, 1700, 45):
     tree(x, y, rng.uniform(0.8, 1.4))
+
+# tree wall: three staggered rings at the edge so the world ends in forest, not a drop-off
+import math as _m
+WALL_R = [(9800, 60), (10600, 70), (11500, 80), (12400, 90)]
+for r, n in WALL_R:
+    for i in range(n):
+        ang = i * 2 * _m.pi / n + rng.uniform(-0.03, 0.03)
+        rr = r + rng.uniform(-250, 250)
+        tree(_m.cos(ang) * rr, _m.sin(ang) * rr, rng.uniform(1.1, 1.8))
 
 # scattered trees elsewhere for depth (away from the walking lines between places)
 for x, y in [(2600, 3200), (3800, -1500), (-1500, 4200), (-4800, -800), (4600, 3600), (-800, -2200), (2200, 1900), (-2600, 900)]:

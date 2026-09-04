@@ -16,6 +16,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FHearthSpeechDelegate, const FStr
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FHearthEventDelegate, const FString&, Kind, const FString&, Text, const FString&, AgentId, const FString&, LocationId);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHearthConnectionDelegate, bool, bConnected);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHearthReplyDelegate, const FString&, AgentId, const FString&, Text);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHearthVisitorStateDelegate, const FString&, LastText);
 
 UCLASS(Config = Game)
 class HEARTH_API UHearthBridgeSubsystem : public UGameInstanceSubsystem
@@ -52,6 +53,13 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Hearth")
 	void SendTalkEnd(const FString& AgentId);
+
+	/** The player stood at a place long enough to pick something up / arrived at camp with a load. */
+	UFUNCTION(BlueprintCallable, Category = "Hearth") void SendVisitorGather(const FString& LocationId);
+	UFUNCTION(BlueprintCallable, Category = "Hearth") void SendVisitorDeposit();
+
+	UPROPERTY(BlueprintReadOnly, Category = "Hearth") TMap<FString, int32> VisitorInventory;
+	UPROPERTY(BlueprintAssignable, Category = "Hearth") FHearthVisitorStateDelegate OnVisitorState;
 
 	// ---- latest state (read after OnWorldInit / OnSnapshot) ----
 	UPROPERTY(BlueprintReadOnly, Category = "Hearth") TMap<FString, FHearthLocationInfo> Locations;

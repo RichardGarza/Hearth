@@ -66,3 +66,29 @@ def test_detic_strips_repeated_openers():
     assert detic("Hey, thanks! We need wood.", "Hey, thanks for asking.", first=False) == "We need wood."
     assert detic("Wait, how about the river?", "Wait, how do we start?", first=False) == "How about the river?"
     assert detic("Sure. The forest is east.", "Nope.", first=False) == "Sure. The forest is east."
+
+
+@pytest.mark.asyncio
+async def test_visitor_gathers_and_drops_off():
+    eng = make_engine()
+    fish_before = eng.world.locations["river"].resources["fish"]
+    assert await eng.visitor_gather("river") == "fish"
+    assert await eng.visitor_gather("River") == "fish"
+    assert eng.visitor_inventory == {"fish": 2}
+    assert eng.world.locations["river"].resources["fish"] == fish_before - 2
+    assert await eng.visitor_gather("camp") is None
+    moved = await eng.visitor_deposit()
+    assert moved == {"fish": 2} and eng.visitor_inventory == {}
+    assert eng.world.camp.stockpile["fish"] == 2
+    assert "Dropped off" in eng.visitor_state()["last"]
+    assert any("visitor puts 2 fish" in m for m in eng.agents["mara"].memory.episodic)
+
+
+def test_prompts_load_from_files():
+    from hearth.agents.prompts import WORLD_RULES, CONVERSE_RULES, LOCAL_MODEL_HINT, PROMPT_DIR
+    assert (PROMPT_DIR / "world_rules.md").exists()
+    assert "- move_to:" in WORLD_RULES and "{ACTIONS}" not in WORLD_RULES and "PLACES:" in WORLD_RULES
+    assert CONVERSE_RULES and LOCAL_MODEL_HINT
+    from hearth.agents.persona import PERSONAS
+    assert [p.id for p in PERSONAS] == ["mara", "jonah", "teodora", "ravi", "lena", "oscar"]
+    assert PERSONAS[0].body == "quinn" and PERSONAS[1].body == "manny"

@@ -17,21 +17,13 @@ import urllib.request
 
 from hearth.agents.memory import Memory
 from hearth.agents.persona import Persona
-from hearth.agents.prompts import CONVERSE_RULES, REFLECTION_PROMPT, WORLD_RULES
+from hearth.agents.prompts import CONVERSE_RULES, LOCAL_MODEL_HINT, REFLECTION_PROMPT, WORLD_RULES
 from hearth.agents.schema import DECISION_SCHEMA, Decision
 from hearth.config import Config
 from hearth.world.state import AgentState, World
 
 log = logging.getLogger("hearth.ollama")
 
-# Small models need the reminder; Claude doesn't.
-LOCAL_HINT = (
-    "\n\nReply with ONLY a JSON object with keys thought, say, action, plan. "
-    "`say` is null or {\"to\": name-or-null, \"text\": \"...\"}. "
-    "`action` is {\"type\": one of the action names, \"target\": ..., \"item\": ..., \"quantity\": ...}. "
-    "Keep `say.text` under 30 words. Most of the time `say` should be null: only speak when you have something new "
-    "to tell someone who is actually here, or when answering a person who spoke to you. Do not narrate what you are doing."
-)
 
 
 _OPENERS = ("hey, thanks", "hey thanks", "thanks,", "thanks!", "thank you", "hey there", "hey,", "hi,", "hello,", "wait,", "oh,")
@@ -109,7 +101,7 @@ class OllamaBrain:
     # ------------------------------------------------------------------ brain
     async def decide(self, world: World, agent: AgentState, persona: Persona, memory: Memory, perception: str) -> Decision:
         system = WORLD_RULES + "\n\nWHO YOU ARE\n" + persona.sheet()
-        text = await self._chat(system, perception + LOCAL_HINT, DECISION_SCHEMA, self.cfg.max_decision_tokens)
+        text = await self._chat(system, perception + "\n\n" + LOCAL_MODEL_HINT, DECISION_SCHEMA, self.cfg.max_decision_tokens)
         if not text:
             return Decision.wait(thought="(no answer from local model)", plan=memory.plan)
         try:

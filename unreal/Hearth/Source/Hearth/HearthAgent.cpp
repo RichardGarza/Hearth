@@ -3,6 +3,7 @@
 #include "AIController.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/PointLightComponent.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "Components/TextRenderComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -90,6 +91,14 @@ void AHearthAgent::Init(const FString& InId, const FString& InName, bool bInIsAI
 		NameLabel->SetTextRenderColor(FColor::Cyan);
 		AILabel->SetVisibility(true);
 		AIGlow->SetVisibility(true);
+		// forest-green suit so the AI person stands out from across the valley
+		for (int32 i = 0; i < GetMesh()->GetNumMaterials(); ++i)
+		{
+			if (UMaterialInstanceDynamic* Dyn = GetMesh()->CreateAndSetMaterialInstanceDynamic(i))
+			{
+				Dyn->SetVectorParameterValue(TEXT("Paint Tint"), FLinearColor(0.06f, 0.30f, 0.10f));
+			}
+		}
 	}
 	SpeechLabel->SetText(FText::GetEmpty());
 	StatusLabel->SetText(FText::GetEmpty());
