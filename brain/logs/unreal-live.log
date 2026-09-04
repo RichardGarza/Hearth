@@ -1,0 +1,77 @@
+﻿Log file open, 09/04/26 13:24:52
+LogInit: Running DelayedAutoRegister Phase StartOfEnginePreInit
+LogInit: Display: Running engine for game: Hearth
+LogCore: UTS: Unreal Trace Server launched successfully
+LogTrace: Initializing trace...
+LogCore: Display: Requested channels: 'cpu,gpu,frame,log,bookmark,screenshot,region'
+LogCore: No trace connection. Tracing to in-memory cache.
+LogTrace: Display: Control listening on port 1985
+LogTrace: Finished trace initialization.
+LogCsvProfiler: Display: Metadata set : platform="Mac"
+LogCsvProfiler: Display: Metadata set : config="Development"
+LogCsvProfiler: Display: Metadata set : buildversion="++UE5+Release-5.8-CL-56702186"
+LogCsvProfiler: Display: Metadata set : engineversion="5.8.2-56702186+++UE5+Release-5.8"
+LogCsvProfiler: Display: Metadata set : enginereleaseversion="5.8.2"
+LogCsvProfiler: Display: Metadata set : os="macOS 26.6.2 25G83"
+LogCsvProfiler: Display: Metadata set : cpu="Apple|Apple M3 Pro"
+LogCsvProfiler: Display: Metadata set : pgoenabled="0"
+LogCsvProfiler: Display: Metadata set : pgoprofilingenabled="0"
+LogCsvProfiler: Display: Metadata set : ltoenabled="0"
+LogCsvProfiler: Display: Metadata set : asan="0"
+LogCsvProfiler: Display: Metadata set : mergedmodules="0"
+LogCsvProfiler: Display: Metadata set : compacttset="0"
+LogCsvProfiler: Display: Metadata set : commandline="" /Users/garzamacbookair/Desktop/Hearth/brain/unreal/Hearth/Hearth.uproject /Game/Maps/Valley -game -windowed -resx=1440 -resy=900 -log -ABSLOG=/Users/garzamacbookair/Desktop/Hearth/brain/logs/unreal-live.log""
+LogCsvProfiler: Display: Metadata set : loginid="414beaf68c44d61a58c0ee9b429d2aaf"
+LogCsvProfiler: Display: Metadata set : llm="0"
+LogInit: Display: Project file not found: /Users/garzamacbookair/Desktop/Hearth/brain/unreal/Hearth/Hearth.uproject
+LogInit: Display: 	Attempting to find via project info helper.
+LogModuleManager: InternalLoadLibrary: 'StorageServerClient' ('/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac/libUnrealEditor-StorageServerClient.dylib')
+LogModuleManager: InternalLoadLibrary: 'CookOnTheFly' ('/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac/libUnrealEditor-CookOnTheFly.dylib')
+LogModuleManager: InternalLoadLibrary: 'StreamingFile' ('/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac/libUnrealEditor-StreamingFile.dylib')
+LogModuleManager: InternalLoadLibrary: 'NetworkFile' ('/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac/libUnrealEditor-NetworkFile.dylib')
+LogModuleManager: InternalLoadLibrary: 'PakFile' ('/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac/libUnrealEditor-PakFile.dylib')
+LogModuleManager: InternalLoadLibrary: 'RSA' ('/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac/libUnrealEditor-RSA.dylib')
+LogModuleManager: InternalLoadLibrary: 'SandboxFile' ('/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac/libUnrealEditor-SandboxFile.dylib')
+LogCsvProfiler: Display: Metadata set : zenstreaming="0"
+LogInit: Running DelayedAutoRegister Phase FileSystemReady
+LogModuleManager: InternalLoadLibrary: 'DesktopPlatform' ('/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac/libUnrealEditor-DesktopPlatform.dylib')
+Launching UnrealBuildTool... [/Users/Shared/Epic Games/UE_5.8/Engine/Build/BatchFiles/Mac/Build.sh -Mode=ValidatePlatforms -OutputSDKs  -AllPlatforms  -project="/Users/garzamacbookair/Desktop/Hearth/brain/unreal/Hearth/Hearth.uproject" -log="/Users/garzamacbookair/Library/Logs/Hearth/AutoSDKInfo.txt" -verbose -timestamps]
+LogProjectManager: Error: Failed to open descriptor file ../../../../../../garzamacbookair/Desktop/Hearth/brain/unreal/Hearth/Hearth.uproject
+LogGenericPlatformMisc: Warning: MessageBox: Message : Failed to open descriptor file ../../../../../../garzamacbookair/Desktop/Hearth/brain/unreal/Hearth/Hearth.uproject
+Message dialog closed, result: Ok, title: Message, text: Failed to open descriptor file ../../../../../../garzamacbookair/Desktop/Hearth/brain/unreal/Hearth/Hearth.uproject
+LogInit: Warning: Could not find a valid project file, the engine will exit now.
+LogInit: Running DelayedAutoRegister Phase TaskGraphSystemReady
+LogStats: Stats thread started at 0.683366
+LogInit: Running DelayedAutoRegister Phase StatSystemReady
+LogModuleManager: InternalLoadLibrary: 'CoreUObject' ('/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac/libUnrealEditor-CoreUObject.dylib')
+LogCsvProfiler: Display: Metadata set : systemresolution.resx="1280"
+LogCsvProfiler: Display: Metadata set : systemresolution.resy="720"
+LogModuleManager: InternalLoadLibrary: 'Engine' ('/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac/libUnrealEditor-Engine.dylib')
+LogModuleManager: InternalLoadLibrary: 'UniversalObjectLocator' ('/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac/libUnrealEditor-UniversalObjectLocator.dylib')
+LogModuleManager: InternalLoadLibrary: 'Renderer' ('/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac/libUnrealEditor-Renderer.dylib')
+LogModuleManager: InternalLoadLibrary: 'AnimGraphRuntime' ('/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac/libUnrealEditor-AnimGraphRuntime.dylib')
+LogModuleManager: InternalLoadLibrary: 'AudioMixerCoreAudio' ('/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac/libUnrealEditor-AudioMixerCoreAudio.dylib')
+LogModuleManager: InternalLoadLibrary: 'AudioMixerCore' ('/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac/libUnrealEditor-AudioMixerCore.dylib')
+LogModuleManager: InternalLoadLibrary: 'SignalProcessing' ('/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac/libUnrealEditor-SignalProcessing.dylib')
+LogModuleManager: InternalLoadLibrary: 'SlateRHIRenderer' ('/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac/libUnrealEditor-SlateRHIRenderer.dylib')
+LogModuleManager: InternalLoadLibrary: 'Landscape' ('/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac/libUnrealEditor-Landscape.dylib')
+LogModuleManager: InternalLoadLibrary: 'RHICore' ('/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac/libUnrealEditor-RHICore.dylib')
+LogModuleManager: InternalLoadLibrary: 'RenderCore' ('/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac/libUnrealEditor-RenderCore.dylib')
+LogModuleManager: InternalLoadLibrary: 'TextureCompressor' ('/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac/libUnrealEditor-TextureCompressor.dylib')
+LogModuleManager: InternalLoadLibrary: 'OpenColorIOWrapper' ('/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac/libUnrealEditor-OpenColorIOWrapper.dylib')
+LogModuleManager: InternalLoadLibrary: 'Virtualization' ('/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac/libUnrealEditor-Virtualization.dylib')
+LogModuleManager: InternalLoadLibrary: 'MessageLog' ('/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac/libUnrealEditor-MessageLog.dylib')
+LogModuleManager: InternalLoadLibrary: 'AudioEditor' ('/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac/libUnrealEditor-AudioEditor.dylib')
+LogModuleManager: InternalLoadLibrary: 'PropertyEditor' ('/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac/libUnrealEditor-PropertyEditor.dylib')
+LogModuleManager: InternalLoadLibrary: 'AudioExtensions' ('/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac/libUnrealEditor-AudioExtensions.dylib')
+LogModuleManager: InternalLoadLibrary: 'AnimationModifiers' ('/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac/libUnrealEditor-AnimationModifiers.dylib')
+LogICUInternationalization: ICU TimeZone Detection - Raw Offset: -8:00, Platform Override: ''
+LogInit: Session CrashGUID >====================================================
+         Session CrashGUID >   UECC-Mac-90EB8B53C043EE3F640E4F8365D29442
+         Session CrashGUID >====================================================
+LogCore: Engine exit requested (reason: EngineExit() was called)
+LogAsyncCompilation: Display: MemorySharingInfo: UsedMemory=428437MiB, MaxMemoryAvailable=23552MiB
+LogExit: Preparing to exit.
+LogPakFile: Destroying PakPlatformFile
+LogExit: Exiting.
+Log file closed, 09/04/26 13:24:52

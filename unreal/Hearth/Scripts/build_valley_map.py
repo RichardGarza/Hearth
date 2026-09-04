@@ -32,8 +32,9 @@ def cosmetic(fn, what):
         unreal.log_warning(f"skipped {what}: {e}")
 
 
-def spawn(cls, loc=(0, 0, 0), rot=(0, 0, 0), label=None):
-    a = actor_sub.spawn_actor_from_class(cls, unreal.Vector(*loc), unreal.Rotator(*rot))
+def spawn(cls, loc=(0, 0, 0), pitch=0.0, yaw=0.0, label=None):
+    # unreal.Rotator's positional order is (roll, pitch, yaw); use keywords to avoid pointing the sun up
+    a = actor_sub.spawn_actor_from_class(cls, unreal.Vector(*loc), unreal.Rotator(roll=0.0, pitch=pitch, yaw=yaw))
     if label:
         a.set_actor_label(label)
     return a
@@ -50,7 +51,7 @@ if grass:
     cosmetic(lambda: ground_mesh.set_material(0, grass), "ground material")
 
 # ---- lighting & sky --------------------------------------------------------------
-sun = spawn(unreal.DirectionalLight, (0, 0, 1000), (-40, 30, 0), label="Sun")
+sun = spawn(unreal.DirectionalLight, (0, 0, 1000), pitch=-40.0, yaw=30.0, label="Sun")
 sun_comp = sun.get_component_by_class(unreal.DirectionalLightComponent)
 cosmetic(lambda: sun_comp.set_editor_property("atmosphere_sun_light", True), "sun atmosphere flag")
 cosmetic(lambda: sun_comp.set_intensity(8.0), "sun intensity")
@@ -70,7 +71,7 @@ nav = spawn(unreal.NavMeshBoundsVolume, (0, 0, 0), label="NavBounds")
 nav.set_actor_scale3d(unreal.Vector(GROUND_UNITS / 200.0, GROUND_UNITS / 200.0, 10.0))
 
 # ---- player start above camp -----------------------------------------------------
-spawn(unreal.PlayerStart, (-1200, -1200, 600), (0, 45, 0), label="PlayerStart")
+spawn(unreal.PlayerStart, (-1200, -1200, 600), pitch=-20.0, yaw=45.0, label="PlayerStart")
 
 # ---- game mode -------------------------------------------------------------------
 world = unreal.EditorLevelLibrary.get_editor_world()
