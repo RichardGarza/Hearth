@@ -32,6 +32,15 @@ UE="/Users/Shared/Epic Games/UE_5.8"
 2. Open `Hearth/Hearth.uproject` (double-click, or `open`). The Valley map loads. Press Play.
    You spawn as a spectator above camp: WASD + mouse to fly. Output Log filter `LogHearth`.
 
+## Character bodies
+
+`Content/Characters/Mannequins` is Epic's Manny/Quinn mannequin set (meshes, materials, unarmed
+idle/walk/jog clips, rigs) copied from `UE_5.8/Templates/TemplateResources/High/Characters/Content/Mannequins`.
+The assets reference each other by the `/Game/Characters/Mannequins/...` path, so the folder must stay
+exactly there. `HearthAnim.h` plays the clips directly from velocity (no AnimBP); `body` from the brain
+(`manny` / `quinn`) picks the mesh. Swap in Fab characters later by changing the paths in `HearthAnim.h`
+or subclassing `AHearthAgent` in Blueprint.
+
 ## Scale
 
 The brain's world is ~1 km across in sim meters. `world_init` sends `meters_to_units`; the brain

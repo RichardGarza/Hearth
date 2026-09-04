@@ -125,6 +125,7 @@ class AgentState:
     addressed_by: list[str] = field(default_factory=list)   # names who spoke to me since my last decision
     last_decision_tick: int = -999
     speech_count: int = 0
+    last_speech_tick: int = -999
 
     def is_idle(self, tick: int) -> bool:
         return self.alive and (self.current is None or tick >= self.busy_until)

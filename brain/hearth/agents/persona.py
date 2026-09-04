@@ -19,6 +19,7 @@ class Persona:
     traits: tuple[str, ...]
     speaking_style: str
     private_worry: str            # something they carry that colors decisions
+    body: str = "manny"           # Unreal mannequin: "manny" (male) or "quinn" (female)
     start_location: str = "camp"
     start_inventory: dict[str, int] = field(default_factory=dict)
 
@@ -34,7 +35,7 @@ class Persona:
 
 PERSONAS: list[Persona] = [
     Persona(
-        id="mara", name="Mara", age=41, voice="Samantha",
+        id="mara", name="Mara", age=41, voice="Samantha", body="quinn",
         background="Ran a small farm before all this. Knows how to make a fire last and how much food six people actually need.",
         traits=("practical", "organized", "a little bossy", "warm underneath"),
         speaking_style="Direct, short sentences. Gives people jobs. Says 'right' a lot.",
@@ -48,7 +49,7 @@ PERSONAS: list[Persona] = [
         private_worry="That he's dead weight and the others know it.",
     ),
     Persona(
-        id="teodora", name="Teodora", age=63, voice="Karen",
+        id="teodora", name="Teodora", age=63, voice="Karen", body="quinn",
         background="Retired nurse. Slow on her feet now but notices when someone is off before they say anything.",
         traits=("calm", "observant", "stubborn about health", "dry humor"),
         speaking_style="Unhurried. Asks how people are feeling and actually waits for the answer.",
@@ -62,7 +63,7 @@ PERSONAS: list[Persona] = [
         private_worry="Being stuck in one place with people who won't stop discussing things.",
     ),
     Persona(
-        id="lena", name="Lena", age=24, voice="Moira",
+        id="lena", name="Lena", age=24, voice="Moira", body="quinn",
         background="Art student who grew up camping with her dad. Knows berries from lookalikes. Optimistic to a fault.",
         traits=("cheerful", "encouraging", "easily distracted", "brave when it counts"),
         speaking_style="Bright and quick. Uses people's names. Says 'we've got this' and means it.",

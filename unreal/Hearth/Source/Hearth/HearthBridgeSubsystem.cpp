@@ -261,6 +261,7 @@ void UHearthBridgeSubsystem::ParseAgent(const TSharedPtr<FJsonObject>& Obj, FHea
 	Out.Id = Obj->GetStringField(TEXT("id"));
 	Obj->TryGetStringField(TEXT("name"), Out.Name);
 	Obj->TryGetStringField(TEXT("voice"), Out.Voice);
+	Obj->TryGetStringField(TEXT("body"), Out.Body);
 	Obj->TryGetStringField(TEXT("location"), Out.LocationId);
 	Out.MovingTo.Empty();
 	Obj->TryGetStringField(TEXT("moving_to"), Out.MovingTo);      // null -> stays empty
@@ -353,6 +354,7 @@ void UHearthBridgeSubsystem::ParseSnapshot(const TSharedPtr<FJsonObject>& Obj)
 		if (const FHearthAgentSnapshot* Existing = Agents.Find(Snap.Id))
 		{
 			Snap.Voice = Existing->Voice;
+			Snap.Body = Existing->Body;
 			Snap.bIsAI = Snap.bIsAI || Existing->bIsAI;
 		}
 		if (!Agents.Contains(Snap.Id))

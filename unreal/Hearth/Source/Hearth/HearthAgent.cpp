@@ -23,36 +23,35 @@ AHearthAgent::AHearthAgent()
 
 	// Default body: the mannequin that ships with the engine, so people are visible before any
 	// Fab/Sketchfab characters are imported. Override in a Blueprint subclass (BP_HearthAgent).
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> BodyMesh(HearthAnim::BodyMeshPath);
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> Manny(HearthAnim::MannyPath);
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> Quinn(HearthAnim::QuinnPath);
 	static ConstructorHelpers::FObjectFinder<UAnimSequence> IdleClip(HearthAnim::IdlePath);
 	static ConstructorHelpers::FObjectFinder<UAnimSequence> WalkClip(HearthAnim::WalkPath);
-	if (BodyMesh.Succeeded())
-	{
-		GetMesh()->SetSkeletalMesh(BodyMesh.Object);
-		GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -88.f));
-		GetMesh()->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
-		GetMesh()->SetAnimationMode(EAnimationMode::AnimationSingleNode);
-	}
+	static ConstructorHelpers::FObjectFinder<UAnimSequence> JogClip(HearthAnim::JogPath);
+	MannyMesh = Manny.Succeeded() ? Manny.Object : nullptr;
+	QuinnMesh = Quinn.Succeeded() ? Quinn.Object : nullptr;
 	IdleAnim = IdleClip.Succeeded() ? IdleClip.Object : nullptr;
 	WalkAnim = WalkClip.Succeeded() ? WalkClip.Object : nullptr;
+	JogAnim = JogClip.Succeeded() ? JogClip.Object : nullptr;
+	HearthAnim::SetupBody(this, MannyMesh);
 
 	NameLabel = CreateDefaultSubobject<UTextRenderComponent>(TEXT("NameLabel"));
 	NameLabel->SetupAttachment(RootComponent);
-	NameLabel->SetRelativeLocation(FVector(0.f, 0.f, 120.f));
+	NameLabel->SetRelativeLocation(FVector(0.f, 0.f, 115.f));
 	NameLabel->SetHorizontalAlignment(EHTA_Center);
 	NameLabel->SetWorldSize(28.f);
 	NameLabel->SetTextRenderColor(FColor::White);
 
 	SpeechLabel = CreateDefaultSubobject<UTextRenderComponent>(TEXT("SpeechLabel"));
 	SpeechLabel->SetupAttachment(RootComponent);
-	SpeechLabel->SetRelativeLocation(FVector(0.f, 0.f, 160.f));
+	SpeechLabel->SetRelativeLocation(FVector(0.f, 0.f, 150.f));
 	SpeechLabel->SetHorizontalAlignment(EHTA_Center);
 	SpeechLabel->SetWorldSize(22.f);
 	SpeechLabel->SetTextRenderColor(FColor::Yellow);
 
 	StatusLabel = CreateDefaultSubobject<UTextRenderComponent>(TEXT("StatusLabel"));
 	StatusLabel->SetupAttachment(RootComponent);
-	StatusLabel->SetRelativeLocation(FVector(0.f, 0.f, 100.f));
+	StatusLabel->SetRelativeLocation(FVector(0.f, 0.f, 96.f));
 	StatusLabel->SetHorizontalAlignment(EHTA_Center);
 	StatusLabel->SetWorldSize(14.f);
 	StatusLabel->SetTextRenderColor(FColor(180, 180, 180));
@@ -76,11 +75,15 @@ AHearthAgent::AHearthAgent()
 	AIGlow->SetVisibility(false);
 }
 
-void AHearthAgent::Init(const FString& InId, const FString& InName, bool bInIsAI)
+void AHearthAgent::Init(const FString& InId, const FString& InName, bool bInIsAI, const FString& Body)
 {
 	AgentId = InId;
 	AgentName = InName;
 	bIsAI = bInIsAI;
+	if (Body.Equals(TEXT("quinn"), ESearchCase::IgnoreCase) && QuinnMesh)
+	{
+		HearthAnim::SetupBody(this, QuinnMesh);
+	}
 	NameLabel->SetText(FText::FromString(InName));
 	if (bIsAI)
 	{
@@ -172,7 +175,7 @@ void AHearthAgent::FaceCamera(UTextRenderComponent* Label) const
 
 void AHearthAgent::UpdateLocomotionAnim()
 {
-	HearthAnim::Update(this, IdleAnim, WalkAnim, bAnimWalking);
+	HearthAnim::Update(this, IdleAnim, WalkAnim, JogAnim, AnimState);
 }
 
 void AHearthAgent::Tick(float DeltaSeconds)

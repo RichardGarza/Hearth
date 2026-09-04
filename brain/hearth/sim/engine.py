@@ -23,6 +23,7 @@ log = logging.getLogger("hearth.engine")
 
 INTERRUPTIBLE = {ActionType.WAIT, ActionType.REST}
 WAIT_TICKS = 2  # a "wait" decision holds for this many ticks unless someone addresses you
+MIN_TICKS_BETWEEN_LINES = 4  # unless replying to someone, don't speak again this soon (kills constant announcing)
 
 
 @dataclass
@@ -75,7 +76,7 @@ class Engine:
         return {
             "type": "world_init",
             "locations": [loc.to_dict() for loc in self.world.locations.values()],
-            "agents": [dict(d, voice=self.agents[d["id"]].persona.voice) for d in self._agent_dicts()],
+            "agents": [dict(d, voice=self.agents[d["id"]].persona.voice, body=self.agents[d["id"]].persona.body) for d in self._agent_dicts()],
             "meters_to_units": 10,   # sim world is ~1 km across; Unreal map ~100 m
             "tick_seconds": self.cfg.tick_seconds,
             "travel_meters_per_tick": 400,
@@ -177,7 +178,6 @@ class Engine:
         w, st = self.world, rt.state
         tick = w.clock.tick
         st.last_decision_tick = tick
-        st.addressed_by = []
         rt.memory.last_feedback = None
         rt.memory.plan = d.plan or rt.memory.plan
         out: list[Event] = []
@@ -185,6 +185,10 @@ class Engine:
         if d.thought:
             out.append(Event(kind=EventKind.THOUGHT, text=d.thought, agent=st.id, location=st.location, tick=tick))
 
+        was_addressed = bool(st.addressed_by)
+        recently_spoke = tick - st.last_speech_tick < MIN_TICKS_BETWEEN_LINES
+        if d.say_text and d.say_text.strip() and recently_spoke and not was_addressed:
+            d.say_text = None   # throttle: they just said something and nobody asked
         if d.say_text and d.say_text.strip():
             to_id = None
             if d.say_to:
@@ -193,9 +197,11 @@ class Engine:
                     to_id = other.id
                     other.addressed_by.append(st.name)
             st.speech_count += 1
+            st.last_speech_tick = tick
             out.append(Event(kind=EventKind.SPEECH, text=d.say_text.strip(), agent=st.id, to=to_id,
                              location=st.location, tick=tick, extra={"voice": rt.persona.voice, "name": st.name}))
 
+        st.addressed_by = []
         action = Action(type=d.action_type, target=d.target, item=d.item, quantity=d.quantity)
         problem = validate(action, w, st)
         if problem:

@@ -86,13 +86,13 @@ void AHearthGameMode::HandleWorldInit()
 		const FHearthAgentSnapshot* Snap = B->Agents.Find(Id);
 		if (!Snap || AgentActors.Contains(Id)) { ++Index; continue; }
 		FVector Pos = StandingSpot(Snap->LocationId, Index);
-		Pos.Z += 100.f;  // capsule half-height; the character settles onto the ground
+		Pos.Z += 110.f;  // capsule half-height; the character settles onto the ground
 		FActorSpawnParameters Params;
 		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 		AHearthAgent* Actor = GetWorld()->SpawnActor<AHearthAgent>(AgentClass, Pos, FRotator::ZeroRotator, Params);
 		if (Actor)
 		{
-			Actor->Init(Snap->Id, Snap->Name, Snap->bIsAI);
+			Actor->Init(Snap->Id, Snap->Name, Snap->bIsAI, Snap->Body);
 			AgentActors.Add(Id, Actor);
 		}
 		++Index;

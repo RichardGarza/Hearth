@@ -31,9 +31,13 @@ LINES = {
 
 
 class ScriptedBrain:
-    def __init__(self, seed: int = 7) -> None:
+    def __init__(self, seed: int = 7, talkativeness: float = 0.35) -> None:
         self.rng = random.Random(seed)
         self._last: dict[str, str] = {}
+        self.talk = talkativeness   # scales every optional line; 1.0 = the old constant announcing
+
+    def _maybe(self, p: float) -> bool:
+        return self.rng.random() < p * self.talk
 
     def _line(self, key: str, **kw) -> str:
         """Pick a line, avoiding the one most recently used for this key so two people
@@ -70,7 +74,7 @@ class ScriptedBrain:
             has = any(a.inventory.get(f, 0) > 0 for f in FOOD) or (at_camp and any(camp.stockpile.get(f, 0) > 0 for f in FOOD))
             if has:
                 return dec(ActionType.EAT, thought="hungry")
-            if say is None and people:
+            if say is None and people and self._maybe(0.8):
                 say = self._line("hungry")
             if not at_camp:
                 return dec(ActionType.MOVE_TO, "camp", thought="find food at camp")
@@ -90,16 +94,16 @@ class ScriptedBrain:
                 return dec(ActionType.MOVE_TO, "camp", thought="night, go home")
             fire = camp.structures["fire"]
             if (not fire.lit or fire.fuel < 6) and (a.inventory.get("wood", 0) > 0 or camp.stockpile.get("wood", 0) > 0):
-                if say is None:
+                if say is None and people and self._maybe(0.7):
                     say = self._line("fire")
                 return dec(ActionType.TEND_FIRE, thought="fire")
             if any(v > 0 for v in a.inventory.values()):
                 return dec(ActionType.DEPOSIT, thought="unload")
             if n.energy < 60:
-                if say is None and self.rng.random() < 0.4:
+                if say is None and people and self._maybe(0.4):
                     say = self._line("sleep")
                 return dec(ActionType.SLEEP, thought="sleep")
-            if say is None and self.rng.random() < 0.2 and people:
+            if say is None and people and self._maybe(0.2):
                 say = self._line("night_worry")
             return dec(ActionType.REST, thought="wait out the night")
 
@@ -112,7 +116,7 @@ class ScriptedBrain:
         if carrying >= 6:
             if at_camp:
                 res = max(a.inventory, key=lambda k: a.inventory[k])
-                if say is None:
+                if say is None and people and self._maybe(0.5):
                     say = self._line("return", n=a.inventory[res], res=res)
                 return dec(ActionType.DEPOSIT, thought="unload")
             return dec(ActionType.MOVE_TO, "camp", thought="bring haul home")
@@ -121,12 +125,12 @@ class ScriptedBrain:
         if at_camp:
             fire = camp.structures["fire"]
             if not fire.lit and camp.stockpile.get("wood", 0) > 0:
-                if say is None:
+                if say is None and people and self._maybe(0.6):
                     say = self._line("fire")
                 return dec(ActionType.TEND_FIRE)
             sh = camp.structures["shelter"]
             if not sh.built and camp.stockpile.get("wood", 0) > 2 and camp.stockpile.get("stone", 0) > 0 and self.rng.random() < 0.6:
-                if say is None:
+                if say is None and people and self._maybe(0.4):
                     say = self._line("build")
                 return dec(ActionType.BUILD, "shelter")
             # go gather your role resource
@@ -135,7 +139,7 @@ class ScriptedBrain:
             if camp.stockpile.get("wood", 0) < 4 and self.rng.random() < 0.5:
                 res = "wood"
             loc = RESOURCE_LOC[res]
-            if say is None and people and self.rng.random() < 0.6:
+            if say is None and people and self._maybe(0.6):
                 say = self._line("leave", loc=loc, res=res)
             return dec(ActionType.MOVE_TO, loc, thought=f"go get {res}")
 

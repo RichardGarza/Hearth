@@ -6,11 +6,11 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "UObject/ConstructorHelpers.h"
 #include "HearthAnim.h"
+#include "HearthPlayerController.h"
 
 AHearthVisitor::AHearthVisitor()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	GetCapsuleComponent()->InitCapsuleSize(42.f, 88.f);
 
 	// look with the mouse, body turns to face where you walk
 	bUseControllerRotationPitch = false;
@@ -34,18 +34,14 @@ AHearthVisitor::AHearthVisitor()
 	Camera->SetupAttachment(Boom, USpringArmComponent::SocketName);
 	Camera->bUsePawnControlRotation = false;
 
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> BodyMesh(HearthAnim::BodyMeshPath);
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> BodyMesh(HearthAnim::MannyPath);
 	static ConstructorHelpers::FObjectFinder<UAnimSequence> IdleClip(HearthAnim::IdlePath);
 	static ConstructorHelpers::FObjectFinder<UAnimSequence> WalkClip(HearthAnim::WalkPath);
-	if (BodyMesh.Succeeded())
-	{
-		GetMesh()->SetSkeletalMesh(BodyMesh.Object);
-		GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -88.f));
-		GetMesh()->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
-		GetMesh()->SetAnimationMode(EAnimationMode::AnimationSingleNode);
-	}
+	static ConstructorHelpers::FObjectFinder<UAnimSequence> JogClip(HearthAnim::JogPath);
 	IdleAnim = IdleClip.Succeeded() ? IdleClip.Object : nullptr;
 	WalkAnim = WalkClip.Succeeded() ? WalkClip.Object : nullptr;
+	JogAnim = JogClip.Succeeded() ? JogClip.Object : nullptr;
+	HearthAnim::SetupBody(this, BodyMesh.Succeeded() ? BodyMesh.Object : nullptr);
 }
 
 void AHearthVisitor::Tick(float DeltaSeconds)
@@ -56,7 +52,7 @@ void AHearthVisitor::Tick(float DeltaSeconds)
 
 void AHearthVisitor::UpdateLocomotionAnim()
 {
-	HearthAnim::Update(this, IdleAnim, WalkAnim, bAnimWalking);
+	HearthAnim::Update(this, IdleAnim, WalkAnim, JogAnim, AnimState);
 }
 
 void AHearthVisitor::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -97,16 +93,22 @@ void AHearthVisitor::BeginPlay()
 // Mouse look with two guards: nothing for the first second (the window's initial mouse capture on
 // macOS can deliver one giant delta that pitched the camera straight down), and no single-frame
 // jumps bigger than a hand can make.
+static float LookScale(const APawn* P)
+{
+	const AHearthPlayerController* PC = Cast<AHearthPlayerController>(P->GetController());
+	return PC ? PC->MouseSensitivity : 0.35f;
+}
+
 void AHearthVisitor::Turn(float Value)
 {
 	if (GetWorld()->GetTimeSeconds() < LookEnabledAt || FMath::Abs(Value) > 40.f) { return; }
-	AddControllerYawInput(Value);
+	AddControllerYawInput(Value * LookScale(this));
 }
 
 void AHearthVisitor::LookUp(float Value)
 {
 	if (GetWorld()->GetTimeSeconds() < LookEnabledAt || FMath::Abs(Value) > 40.f) { return; }
-	AddControllerPitchInput(Value);
+	AddControllerPitchInput(Value * LookScale(this));
 }
 
 void AHearthVisitor::StartRun() { GetCharacterMovement()->MaxWalkSpeed = RunSpeed; }

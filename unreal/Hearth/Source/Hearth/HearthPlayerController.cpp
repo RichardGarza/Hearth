@@ -14,6 +14,7 @@
 #include "HAL/PlatformMisc.h"
 #include "TimerManager.h"
 #include "Widgets/Input/SButton.h"
+#include "Widgets/Input/SSlider.h"
 #include "Widgets/Input/SEditableTextBox.h"
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/Layout/SBox.h"
@@ -151,12 +152,26 @@ void AHearthPlayerController::BuildWidgets()
 						SNew(STextBlock).Font(FCoreStyle::GetDefaultFontStyle("Regular", 18)).Text(FText::FromString(TEXT("Quit to Desktop")))
 					]
 				]
+				+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 18.f, 0.f, 4.f)
+				[
+					SAssignNew(SensitivityText, STextBlock)
+					.Font(FCoreStyle::GetDefaultFontStyle("Regular", 14))
+					.ColorAndOpacity(FLinearColor(0.85f, 0.85f, 0.85f))
+					.Text(FText::FromString(FString::Printf(TEXT("Look sensitivity: %.2f"), MouseSensitivity)))
+				]
+				+ SVerticalBox::Slot().AutoHeight()
+				[
+					SAssignNew(SensitivitySlider, SSlider)
+					.MinValue(0.05f).MaxValue(1.5f)
+					.Value(MouseSensitivity)
+					.OnValueChanged(FOnFloatValueChanged::CreateUObject(this, &AHearthPlayerController::HandleSensitivityChanged))
+				]
 				+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Center).Padding(0.f, 14.f, 0.f, 0.f)
 				[
 					SNew(STextBlock)
 					.Font(FCoreStyle::GetDefaultFontStyle("Regular", 12))
 					.ColorAndOpacity(FLinearColor(0.7f, 0.7f, 0.7f))
-					.Text(FText::FromString(TEXT("ESC to resume   ·   SPACE near [ AI ] to talk")))
+					.Text(FText::FromString(TEXT("ESC to resume   ·   SPACE near [ AI ] to talk   ·   Shift to run")))
 				]
 			]
 		]
@@ -276,6 +291,16 @@ void AHearthPlayerController::QuitGame()
 	// if the console route didn't take (packaged/-game edge cases), force the process to exit
 	FTimerHandle H;
 	GetWorldTimerManager().SetTimer(H, []() { FPlatformMisc::RequestExit(false); }, 1.0f, false);
+}
+
+void AHearthPlayerController::HandleSensitivityChanged(float Value)
+{
+	MouseSensitivity = Value;
+	if (SensitivityText.IsValid())
+	{
+		SensitivityText->SetText(FText::FromString(FString::Printf(TEXT("Look sensitivity: %.2f"), MouseSensitivity)));
+	}
+	SaveConfig();   // persists to Saved/Config/<platform>/Game.ini
 }
 
 FReply AHearthPlayerController::OnResumeClicked()

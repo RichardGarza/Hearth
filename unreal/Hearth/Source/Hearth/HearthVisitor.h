@@ -27,10 +27,11 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
-	// Idle/walk driven from velocity (see HearthAnim.h)
+	// Idle/walk/jog driven from velocity (see HearthAnim.h)
 	UPROPERTY() TObjectPtr<UAnimSequence> IdleAnim;
 	UPROPERTY() TObjectPtr<UAnimSequence> WalkAnim;
-	bool bAnimWalking = false;
+	UPROPERTY() TObjectPtr<UAnimSequence> JogAnim;
+	int32 AnimState = -1;
 	void UpdateLocomotionAnim();
 
 	void MoveForward(float Value);

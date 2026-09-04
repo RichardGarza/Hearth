@@ -26,7 +26,7 @@ public:
 	/** Seconds a spoken line stays visible above the head. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hearth") float SpeechDisplaySeconds = 6.f;
 
-	void Init(const FString& InId, const FString& InName, bool bInIsAI);
+	void Init(const FString& InId, const FString& InName, bool bInIsAI, const FString& Body);
 	void ApplySnapshot(const FHearthAgentSnapshot& Snap, const FVector& TargetWorldPos, float WalkSpeedUnitsPerSec);
 	void Say(const FString& Text, const FString& ToName);
 
@@ -50,10 +50,13 @@ protected:
 
 	void ClearSpeech();
 	void FaceCamera(UTextRenderComponent* Label) const;
-	// Idle/walk driven from velocity (see HearthAnim.h)
+	// Idle/walk/jog driven from velocity (see HearthAnim.h)
 	UPROPERTY() TObjectPtr<UAnimSequence> IdleAnim;
 	UPROPERTY() TObjectPtr<UAnimSequence> WalkAnim;
-	bool bAnimWalking = false;
+	UPROPERTY() TObjectPtr<UAnimSequence> JogAnim;
+	UPROPERTY() TObjectPtr<USkeletalMesh> MannyMesh;
+	UPROPERTY() TObjectPtr<USkeletalMesh> QuinnMesh;
+	int32 AnimState = -1;
 	void UpdateLocomotionAnim();
 
 };

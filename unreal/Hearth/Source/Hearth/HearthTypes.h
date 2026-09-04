@@ -24,6 +24,7 @@ struct FHearthAgentSnapshot
 	UPROPERTY(BlueprintReadOnly) FString Id;
 	UPROPERTY(BlueprintReadOnly) FString Name;
 	UPROPERTY(BlueprintReadOnly) FString Voice;
+	UPROPERTY(BlueprintReadOnly) FString Body;   // "manny" | "quinn"
 	UPROPERTY(BlueprintReadOnly) FString LocationId;
 	UPROPERTY(BlueprintReadOnly) FString MovingTo;       // empty when not travelling
 	UPROPERTY(BlueprintReadOnly) FString Action;         // empty when idle

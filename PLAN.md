@@ -86,7 +86,8 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked (s
 - [x] Unreal: AI character marked with `[ AI ]` tag + cyan glow; "Press SPACE to talk to Jonah" prompt within 7 m; Slate chat box; Enter sends; ESC leaves; walking away closes it
 - [x] Richard tried it: talking works. Fixes from his feedback: walking third-person visitor (no flying), characters animate (velocity-driven clips), repeated "Hey, thanks" opener stripped, map filled with props, ESC menu with Quit
 - [x] `play.sh`: one command; closing the game (Quit or window) kills the brain so the voices stop
-- [ ] Richard confirms Quit in the ESC menu closes the game, and that walking/animation feel right
+- [x] Richard's round 2: look sensitivity way too high → default 0.35 + slider in the ESC menu (saved to Game.ini); "holding guns" → Epic's Manny/Quinn mannequins with unarmed idle/walk/jog (copied from engine template resources into `Content/Characters/Mannequins`, must keep that path); constant announcing → engine throttle (no line within 4 ticks unless replying), scripted talkativeness 0.35, local model told to mostly stay quiet
+- [ ] Richard confirms: Quit closes the game, sensitivity feels right, animations look right
 - [ ] Optional: Jonah's replies spoken from his position in the world instead of the Mac speaker
 - [ ] `--budget` cap and Ollama documented in `docs/SETUP.md`
 
@@ -154,6 +155,7 @@ of continuous running. Override with `HEARTH_MODEL=claude-sonnet-5` for ~40% of 
 | Date | What landed |
 |---|---|
 | 2026-09-04 | Everything in Phase 1 except the live Claude run; Phase 2 server + probe; Phase 3 C++ scaffold (uncompiled). 14 tests green. Git initialized, committed. |
+| 2026-09-04 (night) | Feedback round: walking visitor, ESC menu, props, T-pose fix (single-node instance reports playing with no clip), mouse first-frame jump guard, Manny/Quinn bodies (assets reference `/Game/Characters/Mannequins/...`), sensitivity slider, chatter throttle. 19 tests. |
 | 2026-09-04 (evening) | Richard asked whether AI/talking is needed at all; decided: local AI on one character you can walk up to and type with. Built Ollama brain, mixed routing, talk protocol, Unreal Space-to-talk dialogue. 17 tests green. |
 | 2026-09-04 (later) | Xcode 26.6 + UE 5.8.2 installed. Module compiles (1 fix). Metal Toolchain installed. Valley map built by Python commandlet. Headless brain→Unreal run passes all checks. Unreal ini gotcha: `//` in a value is a comment; quote URLs. Python `unreal.Rotator` positional order is (roll, pitch, yaw). Bodies: engine mannequin. Camera auto-frames camp. |
 

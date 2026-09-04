@@ -79,3 +79,19 @@ def test_decision_from_json_tolerates_garbage():
     assert d.action_type == ActionType.WAIT
     d = Decision.from_json({"thought": "x", "say": {"to": "Mara", "text": "hi"}, "action": {"type": "move_to", "target": "River", "item": None, "quantity": None}, "plan": "go"})
     assert d.say_to == "Mara" and d.target == "River" and d.action_type == ActionType.MOVE_TO
+
+
+@pytest.mark.asyncio
+async def test_speech_is_throttled_unless_addressed():
+    eng = make_engine(ticks=0)
+    mara, jonah = eng.agents["mara"], eng.agents["jonah"]
+    events = []
+    eng.bus.subscribe(events.append)
+    await eng._apply(mara, Decision(thought="", say_text="One.", say_to=None, action_type=ActionType.WAIT))
+    await eng._apply(mara, Decision(thought="", say_text="Two.", say_to=None, action_type=ActionType.WAIT))
+    lines = [e.text for e in events if e.kind == EventKind.SPEECH]
+    assert lines == ["One."]                       # second line dropped: too soon, nobody asked
+    await eng._apply(jonah, Decision(thought="", say_text="Mara?", say_to="Mara", action_type=ActionType.WAIT))
+    await eng._apply(mara, Decision(thought="", say_text="Yes, Jonah.", say_to="Jonah", action_type=ActionType.WAIT))
+    lines = [e.text for e in events if e.kind == EventKind.SPEECH]
+    assert lines[-1] == "Yes, Jonah."              # replying to someone bypasses the throttle
