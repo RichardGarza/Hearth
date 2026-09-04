@@ -1,0 +1,16 @@
+brain/.venv/
+brain/**/__pycache__/
+brain/.pytest_cache/
+brain/*.egg-info/
+logs/*.jsonl
+logs/*.txt
+.env
+
+# Unreal
+unreal/Hearth/Binaries/
+unreal/Hearth/Intermediate/
+unreal/Hearth/DerivedDataCache/
+unreal/Hearth/Saved/
+unreal/Hearth/.vs/
+unreal/Hearth/*.xcworkspace/
+*.DS_Store

@@ -1,0 +1,27 @@
+[project]
+name = "hearth"
+version = "0.1.0"
+description = "A world of Claude-powered people who must cooperate to survive, and talk while doing it."
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=1.0",
+    "websockets>=12",
+    "pydantic>=2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-asyncio"]
+
+[project.scripts]
+hearth = "hearth.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["hearth*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
