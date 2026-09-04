@@ -45,4 +45,4 @@ cd brain
 
 Leave it running, go to another room.
 
-Docs: `PLAN.md` (status + roadmap), `docs/FEATURES.md` (what it does), `docs/ARCHITECTURE.md`, `docs/PROTOCOL.md`, `docs/SETUP.md`, `unreal/README.md`.
+Docs: `docs/FINAL_NOTE.md` (the story so far), `PLAN.md` (status + roadmap), `docs/FEATURES.md` (what it does), `docs/ARCHITECTURE.md`, `docs/PROTOCOL.md`, `docs/SETUP.md`, `unreal/README.md`.

@@ -13,7 +13,9 @@
 
 ---
 
-## 0. Where we are (2026-09-04, end of day)
+## 0. Where we are (2026-09-04, end of day) — CONCEPT PROVEN
+
+Richard's verdict: "concept proven, cool ass thing." Wrap-up narrative: `docs/FINAL_NOTE.md`.
 
 **It runs.** `./play.sh` opens the game: a green valley with a forest, river, meadow, quarry, and a camp
 with a fire pit. Six mannequin characters (3 Manny, 3 Quinn) live their day: gather, eat, drink, tend the
