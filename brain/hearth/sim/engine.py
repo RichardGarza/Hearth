@@ -89,6 +89,12 @@ class Engine:
             if self.paused:
                 await asyncio.sleep(0.2)
                 continue
+            if self.cfg.budget_usd is not None and hasattr(self.brain, "estimated_cost"):
+                spent = self.brain.estimated_cost()
+                if spent >= self.cfg.budget_usd:
+                    await self.bus.publish(Event(kind=EventKind.SYSTEM, public=True, tick=self.world.clock.tick,
+                                                 text=f"Budget reached (${spent:.2f} of ${self.cfg.budget_usd:.2f}). Stopping."))
+                    break
             t0 = time.monotonic()
             await self.tick()
             for hook in self.drain_hooks:

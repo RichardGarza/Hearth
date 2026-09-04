@@ -69,7 +69,7 @@ def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="hearth", description="A world of people who must cooperate to survive.")
     sub = p.add_subparsers(dest="cmd", required=True)
     r = sub.add_parser("run", help="run the simulation")
-    r.add_argument("--brain", choices=["claude", "scripted"], default="claude")
+    r.add_argument("--brain", choices=["claude", "ollama", "scripted"], default="claude")
     r.add_argument("--voice", choices=["say", "none"], default="say")
     r.add_argument("--agents", type=int, default=6, help="how many of the 6 personas to spawn")
     r.add_argument("--ticks", type=int, default=None, help="stop after N ticks (default: run forever)")
@@ -79,6 +79,8 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--seed", type=int, default=None)
     r.add_argument("--model", default=None)
     r.add_argument("--effort", default=None, choices=["low", "medium", "high", "xhigh", "max"])
+    r.add_argument("--budget", type=float, default=None, help="stop when estimated Claude spend reaches this many dollars")
+    r.add_argument("--ollama-model", default=None, help="local model for --brain ollama (default qwen2.5:7b)")
     r.add_argument("--thoughts", action="store_true", help="print agents' private thoughts")
     r.add_argument("--quiet", action="store_true", help="hide action lines, show only speech and events")
     r.add_argument("--no-sync-voice", action="store_true", help="don't pause the world while a line is being spoken")
@@ -99,6 +101,10 @@ async def run(args: argparse.Namespace) -> int:
         cfg.ws_port = args.port
     if args.seed is not None:
         cfg.seed = args.seed
+    if args.budget is not None:
+        cfg.budget_usd = args.budget
+    if args.ollama_model:
+        cfg.ollama_model = args.ollama_model
     cfg.voice_backend = args.voice
     cfg.ws_enabled = not args.no_ws
 
@@ -111,7 +117,12 @@ async def run(args: argparse.Namespace) -> int:
     if args.brain == "claude":
         from hearth.agents.brain_claude import ClaudeBrain
         brain = ClaudeBrain(cfg)
-        print(f"brain: claude ({cfg.model}, effort={cfg.effort}, fallbacks={'on' if cfg.fallbacks else 'off'})")
+        print(f"brain: claude ({cfg.model}, effort={cfg.effort}, fallbacks={'on' if cfg.fallbacks else 'off'}"
+              + (f", budget=${cfg.budget_usd:.2f}" if cfg.budget_usd is not None else "") + ")")
+    elif args.brain == "ollama":
+        from hearth.agents.brain_ollama import OllamaBrain
+        brain = OllamaBrain(cfg)
+        print(f"brain: ollama ({cfg.ollama_model} at {cfg.ollama_url}, free)")
     else:
         from hearth.agents.brain_scripted import ScriptedBrain
         brain = ScriptedBrain(seed=cfg.seed)

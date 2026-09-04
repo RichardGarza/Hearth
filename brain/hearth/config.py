@@ -19,6 +19,14 @@ class Config:
     fallbacks: bool = field(default_factory=lambda: _env("HEARTH_FALLBACKS", "0") == "1")
     max_decision_tokens: int = 2000
     max_concurrent_calls: int = 6
+    budget_usd: float | None = None  # stop the run when estimated Claude spend reaches this
+
+    # --- Ollama (local, free) ---
+    ollama_url: str = field(default_factory=lambda: _env("HEARTH_OLLAMA_URL", "http://127.0.0.1:11434"))
+    ollama_model: str = field(default_factory=lambda: _env("HEARTH_OLLAMA_MODEL", "qwen2.5:7b"))
+    ollama_parallel: int = 2
+    ollama_ctx: int = 8192
+    ollama_timeout: float = 120.0
 
     # --- Simulation pacing ---
     tick_minutes: int = 10           # world minutes per tick

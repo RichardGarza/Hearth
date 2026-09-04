@@ -22,6 +22,14 @@ from hearth.world.state import AgentState, World
 
 log = logging.getLogger("hearth.claude")
 
+# $ per million tokens: (input, output, cache read, cache write). Used only for the --budget estimate.
+PRICES = {
+    "claude-opus-5": (5.0, 25.0, 0.5, 6.25),
+    "claude-sonnet-5": (2.0, 10.0, 0.2, 2.5),
+    "claude-haiku-4-5": (1.0, 5.0, 0.1, 1.25),
+    "claude-fable-5-1": (10.0, 50.0, 0.25, 12.5),
+}
+
 
 class ClaudeBrain:
     def __init__(self, cfg: Config) -> None:
@@ -106,7 +114,13 @@ class ClaudeBrain:
         self.usage["cache_read"] += u.cache_read_input_tokens or 0
         self.usage["cache_write"] += u.cache_creation_input_tokens or 0
 
+    def estimated_cost(self) -> float:
+        """Rough dollars spent so far, from token counts and the price table (0 if model unknown)."""
+        pi, po, pr, pw = PRICES.get(self.cfg.model, (0.0, 0.0, 0.0, 0.0))
+        u = self.usage
+        return (u["input"] * pi + u["output"] * po + u["cache_read"] * pr + u["cache_write"] * pw) / 1e6
+
     def usage_line(self) -> str:
         u = self.usage
         return (f"calls={u['calls']} in={u['input']} cache_read={u['cache_read']} cache_write={u['cache_write']} "
-                f"out={u['output']} refusals={u['refusals']} errors={u['errors']}")
+                f"out={u['output']} refusals={u['refusals']} errors={u['errors']} est_cost=${self.estimated_cost():.2f}")
