@@ -72,7 +72,8 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked (s
 - [x] Round 3 (Richard): sensitivity 1–10 slider in 0.5 steps (bigger, styled); world ringed by a tree wall (no drop-off); layered conifers; you gather at places (10 s) and auto-drop at camp; Jonah in a forest-green suit; chat box keeps focus after Enter; launcher kill bug fixed (process is `Python` not `python`) + brain exits when the game disconnects; the AI's instructions moved to editable files in `brain/prompts/`
 - [x] Round 4: ENTER talks, SPACE jumps, `hump` cheat (6 s dance), look guard armed on first window focus (camera was spinning toward the quarry on start), carry HUD shows from the start
 - [x] Jump tuned: +15% height, heavier fall, hold-to-jump-higher. Brain exit-on-disconnect now waits 8 s (a dying old window could trip it)
-- [ ] Richard confirms rounds 3–4 in play
+- [x] Round 5: Lumen + Voices toggles in ESC menu; brain waits for the game and starts quiet; minimap top-right; launcher root-cause fix (Unreal binary re-execs and returns early → launcher now waits on the real game process; the old kill pattern had hidden this)
+- [ ] Richard confirms rounds 3–5 in play
 - [ ] Photorealistic trees: needs real assets — install Quixel/Megascans trees from Fab (free with an Epic account) and point `build_valley_map.py` at them
 - [ ] Day/night via directional light driven by sim time
 - [ ] Visual state: campfire flame + light when lit (light exists), shelter mesh growing with progress, rain

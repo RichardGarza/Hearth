@@ -46,6 +46,8 @@ class Config:
     ws_port: int = field(default_factory=lambda: int(_env("HEARTH_WS_PORT", "8765")))
     ws_enabled: bool = True
     exit_with_client: bool = False   # stop the brain when the last viewer (Unreal) disconnects
+    wait_for_client: bool = False    # hold the world paused until a viewer connects
+    quiet_start_ticks: int = 6       # after the viewer connects, nobody speaks for this many ticks
 
     # --- Logging ---
     log_dir: Path = field(default_factory=lambda: Path(__file__).resolve().parents[2] / "logs")

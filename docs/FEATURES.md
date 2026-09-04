@@ -23,7 +23,16 @@ Brain flags: `--brain claude|ollama|scripted`, `--ai-agents jonah,mara`, `--voic
 **You** are a third-person mannequin. WASD walk, mouse look, Shift run, **Space** jump (tap for a hop, hold for full
 height; falls a little heavier than it rises). You start a short walk from camp. No flying.
 
-**ESC** opens the menu: Resume, Quit to Desktop, look-sensitivity slider shown as 1–10 in half steps (persists). ESC again resumes. Quit closes the game; the brain notices the disconnect and exits too.
+**ESC** opens the menu: Resume, Quit to Desktop, **Lighting: Lumen on/off** (off frees GPU/unified memory for
+the local model; saved), **Voices on/off** (mutes the brain's speech, text still shows), look-sensitivity
+slider shown as 1–10 in half steps (saved). ESC again resumes. Quit closes the game; the brain notices
+the disconnect and exits too.
+
+**Minimap** top-right: north-up map of the valley. Places labeled (camp orange), every person a white
+dot with their name, AI people cyan, you as a yellow arrow pointing where you look.
+
+**Calm start.** The brain waits until the game connects, then nobody speaks for the first minute or so,
+so the world doesn't start chattering while the window is still loading.
 
 **Talking.** Characters with a cyan name, a floating `[ AI ]` tag, and a glow are model-driven. Within
 about 7 m of one, "Press ENTER to talk to <name>" appears. ENTER opens a chat box: type, Enter to send.

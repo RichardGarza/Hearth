@@ -95,3 +95,22 @@ async def test_speech_is_throttled_unless_addressed():
     await eng._apply(mara, Decision(thought="", say_text="Yes, Jonah.", say_to="Jonah", action_type=ActionType.WAIT))
     lines = [e.text for e in events if e.kind == EventKind.SPEECH]
     assert lines[-1] == "Yes, Jonah."              # replying to someone bypasses the throttle
+
+
+@pytest.mark.asyncio
+async def test_quiet_start_and_mute_commands():
+    eng = make_engine(ticks=0)
+    eng.cfg.wait_for_client = True
+    eng.paused = True
+    assert await eng.command("viewer_ready") == "started"
+    assert not eng.paused and eng.quiet_until_tick == eng.cfg.quiet_start_ticks
+    events = []
+    eng.bus.subscribe(events.append)
+    mara = eng.agents["mara"]
+    await eng._apply(mara, Decision(thought="", say_text="Too early.", say_to=None, action_type=ActionType.WAIT))
+    assert not [e for e in events if e.kind == EventKind.SPEECH]
+    eng.quiet_until_tick = 0
+    await eng._apply(mara, Decision(thought="", say_text="Now.", say_to=None, action_type=ActionType.WAIT))
+    assert [e.text for e in events if e.kind == EventKind.SPEECH] == ["Now."]
+    assert await eng.command("mute") == "muted" and eng.muted
+    assert await eng.command("unmute") == "unmuted" and not eng.muted

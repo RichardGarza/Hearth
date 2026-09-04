@@ -13,7 +13,7 @@ ROOT="$(cd "$(dirname "$0")" && pwd)"
 UE="/Users/Shared/Epic Games/UE_5.8"
 BRAIN_ARGS=(--brain ollama --ai-agents jonah --voice say --tick-seconds 6 --quiet)
 if [[ $# -gt 0 ]]; then BRAIN_ARGS=("$@"); fi
-BRAIN_ARGS+=(--exit-with-client)   # brain shuts itself down when the game disconnects
+BRAIN_ARGS+=(--exit-with-client --wait-for-client)   # brain idles until the game connects, exits when it leaves
 
 cleanup() {
   # the interpreter is called "Python" (capital P) on this Mac, so match on the module args only
@@ -35,5 +35,9 @@ cd "$ROOT/brain"
 sleep 2
 echo "brain: ${BRAIN_ARGS[*]}"
 echo "game: opening (ESC = menu, SPACE near [ AI ] = talk, Shift = run)"
-"$UE/Engine/Binaries/Mac/UnrealEditor" "$ROOT/unreal/Hearth/Hearth.uproject" /Game/Maps/Valley -game -windowed -resx=1440 -resy=900 -log -ABSLOG="$ROOT/logs/unreal-live.log" > /dev/null 2>&1
+"$UE/Engine/Binaries/Mac/UnrealEditor" "$ROOT/unreal/Hearth/Hearth.uproject" /Game/Maps/Valley -game -windowed -resx=1440 -resy=900 -log -ABSLOG="$ROOT/logs/unreal-live.log" > /dev/null 2>&1 &
+# The launcher binary re-execs the real game as a separate process and returns early, so wait on the
+# actual game process instead of the command we started.
+sleep 6
+while pgrep -f "UnrealEditor.*Hearth.uproject.*-game" > /dev/null; do sleep 2; done
 echo "game closed."

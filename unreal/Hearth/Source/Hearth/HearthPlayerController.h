@@ -32,6 +32,14 @@ public:
 	static float DisplayFromSens(float S) { return 1.f + (S - SensMin) / (SensMax - SensMin) * 9.f; }
 	static float SensFromDisplay(float D) { return SensMin + (D - 1.f) / 9.f * (SensMax - SensMin); }
 
+	/** Lumen global illumination + reflections. Off saves GPU/unified memory for the local model. Saved. */
+	UPROPERTY(Config, EditAnywhere, BlueprintReadWrite, Category = "Hearth") bool bLumen = true;
+	/** Voices (text-to-speech in the brain). Off = lines still appear as text. */
+	UPROPERTY(BlueprintReadOnly, Category = "Hearth") bool bVoices = true;
+
+	UFUNCTION(BlueprintCallable, Category = "Hearth") void SetLumen(bool bOn);
+	UFUNCTION(BlueprintCallable, Category = "Hearth") void SetVoices(bool bOn);
+
 	/** Seconds standing at a resource place before you pick one up. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hearth") float GatherSeconds = 10.f;
 
@@ -96,6 +104,11 @@ private:
 	void AppendLine(const FString& Line);
 	FReply OnResumeClicked();
 	FReply OnQuitClicked();
+	FReply OnLumenClicked();
+	FReply OnVoicesClicked();
+	TSharedPtr<STextBlock> LumenText;
+	TSharedPtr<STextBlock> VoicesText;
+	void RefreshToggleTexts();
 
 	UFUNCTION() void HandleReply(const FString& AgentId, const FString& Text);
 };

@@ -57,6 +57,7 @@ class BridgeServer:
     async def _handler(self, ws: ServerConnection) -> None:
         self.clients.add(ws)
         log.info("client connected (%d total)", len(self.clients))
+        await self.engine.command("viewer_ready")
         try:
             await ws.send(json.dumps(self.engine.world_init_message()))
             await ws.send(json.dumps(self.engine.world.snapshot()))

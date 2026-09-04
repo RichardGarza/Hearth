@@ -54,6 +54,8 @@ class Engine:
     visitor_last: str = ""
     paused: bool = False
     stopped: bool = False
+    muted: bool = False            # voices off (lines still show as text)
+    quiet_until_tick: int = 0      # nobody speaks before this tick (calm start after the game connects)
 
     # ------------------------------------------------------------------ setup
     def add_agent(self, persona: Persona) -> AgentRuntime:
@@ -191,6 +193,8 @@ class Engine:
         recently_spoke = tick - st.last_speech_tick < MIN_TICKS_BETWEEN_LINES
         if d.say_text and d.say_text.strip() and recently_spoke and not was_addressed:
             d.say_text = None   # throttle: they just said something and nobody asked
+        if d.say_text and tick < self.quiet_until_tick:
+            d.say_text = None   # calm start: let the visitor arrive before anyone talks
         if d.say_text and d.say_text.strip():
             to_id = None
             if d.say_to:
@@ -366,6 +370,18 @@ class Engine:
         if name == "resume":
             self.paused = False
             return "resumed"
+        if name == "mute":
+            self.muted = True
+            return "muted"
+        if name == "unmute":
+            self.muted = False
+            return "unmuted"
+        if name == "viewer_ready":
+            # the game is in: start the world (if it was waiting) with a short quiet period
+            self.quiet_until_tick = w.clock.tick + self.cfg.quiet_start_ticks
+            if self.paused and self.cfg.wait_for_client:
+                self.paused = False
+            return "started"
         if name == "storm":
             w.weather, w.weather_ticks_left = "storm", 12
             await self._publish_and_remember([Event(kind=EventKind.WEATHER, public=True, tick=tick,

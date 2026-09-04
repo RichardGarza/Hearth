@@ -4,6 +4,7 @@
 #include "HearthVisitor.h"
 #include "GameFramework/Character.h"
 #include "HearthLocation.h"
+#include "SHearthMinimap.h"
 #include "Brushes/SlateRoundedBoxBrush.h"
 #include "HearthBridgeSubsystem.h"
 #include "Components/InputComponent.h"
@@ -15,6 +16,7 @@
 #include "GameFramework/Pawn.h"
 #include "Styling/CoreStyle.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "HAL/IConsoleManager.h"
 #include "HAL/PlatformMisc.h"
 #include "TimerManager.h"
 #include "Widgets/Input/SButton.h"
@@ -41,6 +43,7 @@ void AHearthPlayerController::BeginPlay()
 		PlayerCameraManager->ViewPitchMax = 35.f;
 	}
 	BuildWidgets();
+	SetLumen(bLumen);   // apply the saved choice
 	if (UHearthBridgeSubsystem* B = Bridge())
 	{
 		B->OnReply.AddDynamic(this, &AHearthPlayerController::HandleReply);
@@ -100,6 +103,19 @@ void AHearthPlayerController::BuildWidgets()
 	SensitivityStyle.SetDisabledThumbImage(FSlateRoundedBoxBrush(FLinearColor(0.5f, 0.5f, 0.5f, 1.f), 14.f, FVector2f(28.f, 28.f)));
 
 	SAssignNew(RootWidget, SOverlay)
+	+ SOverlay::Slot().HAlign(HAlign_Right).VAlign(VAlign_Top).Padding(0.f, 20.f, 24.f, 0.f)
+	[
+		SNew(SVerticalBox)
+		+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Right)
+		[
+			SNew(STextBlock).Font(FCoreStyle::GetDefaultFontStyle("Bold", 12)).ColorAndOpacity(FLinearColor(0.8f, 0.8f, 0.8f)).ShadowOffset(FVector2D(1.f, 1.f))
+			.Text(FText::FromString(TEXT("VALLEY  ·  N up")))
+		]
+		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 4.f)
+		[
+			SNew(SHearthMinimap).Size(230.f).WorldRange(6800.f).World(GetWorld())
+		]
+	]
 	+ SOverlay::Slot().HAlign(HAlign_Left).VAlign(VAlign_Top).Padding(24.f, 20.f)
 	[
 		SNew(SVerticalBox)
@@ -205,6 +221,26 @@ void AHearthPlayerController::BuildWidgets()
 						SNew(STextBlock).Font(FCoreStyle::GetDefaultFontStyle("Regular", 18)).Text(FText::FromString(TEXT("Quit to Desktop")))
 					]
 				]
+				+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 14.f, 0.f, 6.f)
+				[
+					SNew(SButton)
+					.HAlign(HAlign_Center)
+					.ContentPadding(FMargin(20.f, 10.f))
+					.OnClicked(FOnClicked::CreateUObject(this, &AHearthPlayerController::OnLumenClicked))
+					[
+						SAssignNew(LumenText, STextBlock).Font(FCoreStyle::GetDefaultFontStyle("Regular", 16))
+					]
+				]
+				+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 6.f)
+				[
+					SNew(SButton)
+					.HAlign(HAlign_Center)
+					.ContentPadding(FMargin(20.f, 10.f))
+					.OnClicked(FOnClicked::CreateUObject(this, &AHearthPlayerController::OnVoicesClicked))
+					[
+						SAssignNew(VoicesText, STextBlock).Font(FCoreStyle::GetDefaultFontStyle("Regular", 16))
+					]
+				]
 				+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 18.f, 0.f, 4.f)
 				[
 					SAssignNew(SensitivityText, STextBlock)
@@ -243,6 +279,63 @@ void AHearthPlayerController::BuildWidgets()
 		]
 	];
 	GEngine->GameViewport->AddViewportWidgetContent(SNew(SWeakWidget).PossiblyNullContent(RootWidget.ToSharedRef()), 10);
+	RefreshToggleTexts();
+}
+
+// ---------------------------------------------------------------- toggles
+
+static void SetCVarInt(const TCHAR* Name, int32 Value)
+{
+	if (IConsoleVariable* Var = IConsoleManager::Get().FindConsoleVariable(Name))
+	{
+		Var->Set(Value, ECVF_SetByGameSetting);
+	}
+}
+
+void AHearthPlayerController::SetLumen(bool bOn)
+{
+	bLumen = bOn;
+	// 1 = Lumen, 0 = none (no dynamic GI / screen-space-free reflections). Takes effect immediately.
+	SetCVarInt(TEXT("r.DynamicGlobalIlluminationMethod"), bOn ? 1 : 0);
+	SetCVarInt(TEXT("r.ReflectionMethod"), bOn ? 1 : 0);
+	SetCVarInt(TEXT("r.Lumen.Reflections.Allow"), bOn ? 1 : 0);
+	SaveConfig();
+	RefreshToggleTexts();
+	UE_LOG(LogHearth, Log, TEXT("Lumen %s"), bOn ? TEXT("on") : TEXT("off"));
+}
+
+void AHearthPlayerController::SetVoices(bool bOn)
+{
+	bVoices = bOn;
+	if (UHearthBridgeSubsystem* B = Bridge())
+	{
+		B->SendCommand(bOn ? TEXT("unmute") : TEXT("mute"));
+	}
+	RefreshToggleTexts();
+}
+
+void AHearthPlayerController::RefreshToggleTexts()
+{
+	if (LumenText.IsValid())
+	{
+		LumenText->SetText(FText::FromString(bLumen ? TEXT("Lighting: Lumen ON  (click to turn off, saves memory)") : TEXT("Lighting: Lumen OFF  (click to turn on)")));
+	}
+	if (VoicesText.IsValid())
+	{
+		VoicesText->SetText(FText::FromString(bVoices ? TEXT("Voices: ON  (click to mute)") : TEXT("Voices: OFF  (click to unmute)")));
+	}
+}
+
+FReply AHearthPlayerController::OnLumenClicked()
+{
+	SetLumen(!bLumen);
+	return FReply::Handled();
+}
+
+FReply AHearthPlayerController::OnVoicesClicked()
+{
+	SetVoices(!bVoices);
+	return FReply::Handled();
 }
 
 // ---------------------------------------------------------------- proximity

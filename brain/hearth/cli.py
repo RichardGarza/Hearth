@@ -76,6 +76,8 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--tick-seconds", type=float, default=None, help="real seconds per tick (default 3; 0 = max speed)")
     r.add_argument("--no-ws", action="store_true", help="don't start the WebSocket bridge")
     r.add_argument("--exit-with-client", action="store_true", help="stop when the game/viewer disconnects (used by play.sh)")
+    r.add_argument("--wait-for-client", action="store_true", help="don't start the world until the game connects (used by play.sh)")
+    r.add_argument("--quiet-start", type=int, default=None, help="ticks of silence after the game connects (default 6)")
     r.add_argument("--port", type=int, default=None)
     r.add_argument("--seed", type=int, default=None)
     r.add_argument("--model", default=None)
@@ -110,6 +112,9 @@ async def run(args: argparse.Namespace) -> int:
     cfg.voice_backend = args.voice
     cfg.ws_enabled = not args.no_ws
     cfg.exit_with_client = args.exit_with_client
+    cfg.wait_for_client = args.wait_for_client
+    if args.quiet_start is not None:
+        cfg.quiet_start_ticks = args.quiet_start
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s", stream=sys.stderr)
     logging.getLogger("websockets").setLevel(logging.WARNING)
@@ -142,6 +147,9 @@ async def run(args: argparse.Namespace) -> int:
         ai_ids = {p.id for p in personas(args.agents)}
 
     engine = Engine(cfg=cfg, world=world, brain=brain, ai_agents=ai_ids)
+    if cfg.wait_for_client and cfg.ws_enabled:
+        engine.paused = True
+        print("waiting for the game to connect before starting the world")
     for p in personas(args.agents):
         engine.add_agent(p)
 
@@ -154,7 +162,7 @@ async def run(args: argparse.Namespace) -> int:
         from hearth.voice.tts import SayBackend, SpeechQueue
         tts = SpeechQueue(SayBackend(rate=cfg.speech_rate))
         tts.start()
-        engine.bus.subscribe(tts.on_event)
+        engine.bus.subscribe(lambda e: None if engine.muted else tts.on_event(e))
         if not args.no_sync_voice:
             engine.drain_hooks.append(tts.drain)
 
@@ -170,8 +178,11 @@ async def run(args: argparse.Namespace) -> int:
             server = None
 
     loop = asyncio.get_running_loop()
-    for sig in (signal.SIGINT, signal.SIGTERM):
-        loop.add_signal_handler(sig, lambda: setattr(engine, "stopped", True))
+    def _on_signal(name: str) -> None:
+        logging.getLogger("hearth").info("received %s; stopping", name)
+        engine.stopped = True
+    for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
+        loop.add_signal_handler(sig, _on_signal, sig.name)
 
     print(f"log: {cfg.log_dir / f'run-{stamp}.jsonl'}\n")
     try:
