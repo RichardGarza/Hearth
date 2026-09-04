@@ -28,7 +28,7 @@ Optional env vars (see `brain/hearth/config.py`):
 
 1. Install **Xcode** from the App Store (full Xcode; UE5 needs it to compile C++ on macOS).
    Then run once: `sudo xcode-select -s /Applications/Xcode.app` and open Xcode to accept the license.
-2. Install the **Epic Games Launcher**, sign in, install **Unreal Engine 5.4** or newer.
+2. Install the **Epic Games Launcher**, sign in, install **Unreal Engine 5.8** (installed).
 3. Open `unreal/Hearth/Hearth.uproject`. When asked to rebuild the module, say yes.
    First compile takes 10–20 minutes on an M3.
 4. In the editor: create a level (Landscape or just a big plane), add a **NavMeshBoundsVolume** covering

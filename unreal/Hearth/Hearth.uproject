@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "5.6",
+	"EngineAssociation": "5.8",
 	"Category": "",
 	"Description": "Hearth: a world of Claude-powered people who must cooperate to survive.",
 	"Modules": [
@@ -12,6 +12,24 @@
 				"Engine",
 				"AIModule"
 			]
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "OnlineSubsystemEOS",
+			"Enabled": true
+		},
+		{
+			"Name": "OnlineSubsystem",
+			"Enabled": true
+		},
+		{
+			"Name": "OnlineSubsystemUtils",
+			"Enabled": true
+		},
+		{
+			"Name": "SocketSubsystemEOS",
+			"Enabled": true
 		}
 	]
 }

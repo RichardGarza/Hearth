@@ -170,7 +170,7 @@ void UHearthBridgeSubsystem::ParseIntMap(const TSharedPtr<FJsonObject>& Obj, TMa
 		double V = 0;
 		if (Pair.Value->TryGetNumber(V))
 		{
-			Out.Add(Pair.Key, static_cast<int32>(V));
+			Out.Add(FString(*Pair.Key), static_cast<int32>(V));
 		}
 	}
 }

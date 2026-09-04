@@ -62,8 +62,10 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked (s
 - [x] `HearthBridgeSubsystem` — WebSocket client, JSON parsing, event dispatch
 - [x] `AHearthAgent` — character with name + speech text, moves to location targets
 - [x] `AHearthLocation` — resource node / camp marker actors spawned from the world init message
-- [ ] **Install Unreal Engine 5.4+ and full Xcode** (Richard — see `docs/SETUP.md`)
-- [ ] Open project, let it compile, build a landscape map with NavMesh
+- [x] Install Unreal Engine (5.8.2 installed) and full Xcode (26.6) — done 2026-09-04
+- [x] Project compiles against UE 5.8 (`Build.sh HearthEditor Mac Development`), one fix needed
+- [ ] Xcode Metal Toolchain component (editor needs it to compile shaders; `xcodebuild -downloadComponent MetalToolchain`, or Xcode → Settings → Components)
+- [ ] Build a map with ground, lights, and NavMesh
 - [ ] Assign humanoid skeletal meshes. Sources Richard picked (2026-09-04):
   - Fab, Epic Games seller, characters: https://www.fab.com/sellers/Epic%20Games?listing_types=3d-model&categories=characters-creatures — **prefer these**: free, already rigged to the UE5 skeleton, animations work without retargeting (Paragon heroes, City Sample crowd people, Mannequins)
   - Sketchfab Blender tag: https://sketchfab.com/tags/blender — check license (CC-BY is fine), and expect to rig/retarget via IK Rig before they animate
@@ -88,9 +90,10 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked (s
 | Item | Why | Status |
 |---|---|---|
 | `ANTHROPIC_API_KEY` exported in the shell (or `ant auth login`) | Real agents | **needed for Phase 1 final step** |
-| Unreal Engine 5.4+ via Epic Games Launcher | Phase 3 | not installed |
-| Full Xcode (not just Command Line Tools) | UE5 on Mac compiles C++ through Xcode | only CLT installed |
-| ~60 GB free disk | UE5 + Xcode | 69 GB free now — tight, watch it |
+| Unreal Engine 5.4+ via Epic Games Launcher | Phase 3 | **installed** (5.8.2) |
+| Full Xcode (not just Command Line Tools) | UE5 on Mac compiles C++ through Xcode | **installed** (26.6) |
+| Xcode Metal Toolchain component | Editor shader compilation | pending — Apple's download failed once |
+| ~60 GB free disk | UE5 + Xcode | 100 GB free after cleanup |
 
 ---
 
@@ -116,7 +119,7 @@ of continuous running. Override with `HEARTH_MODEL=claude-sonnet-5` for ~40% of 
 | 2026-09-04 | macOS `say` for TTS in Phase 1 | Zero setup, distinct voices, runs offline. Swappable backend later |
 | 2026-09-04 | Project name "Hearth" | The campfire is the thing they must keep alive together |
 | 2026-09-04 | Unreal scale: `meters_to_units = 10` (sim km → ~100 m map); walk speed derived from `tick_seconds` | Human-scale map that fits a NavMesh; characters arrive when the sim says they arrive. Run the brain with `--tick-seconds 8` when Unreal is watching |
-| 2026-09-04 | Unreal C++ written blind (no engine installed) | Compile errors expected on first open; they'll be small. Fixing them is the first Phase 3 task after install |
+| 2026-09-04 | Unreal C++ written blind (no engine installed) | One compile error on UE 5.8 (JSON map keys are `TSharedString` now); fixed same day |
 
 ---
 
