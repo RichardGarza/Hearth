@@ -10,6 +10,8 @@
 #include "Framework/Application/SlateApplication.h"
 #include "GameFramework/Pawn.h"
 #include "Styling/CoreStyle.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "Widgets/Input/SButton.h"
 #include "Widgets/Input/SEditableTextBox.h"
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/Layout/SBox.h"
@@ -26,6 +28,11 @@ UHearthBridgeSubsystem* AHearthPlayerController::Bridge() const
 void AHearthPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+	if (PlayerCameraManager)
+	{
+		PlayerCameraManager->ViewPitchMin = -55.f;
+		PlayerCameraManager->ViewPitchMax = 35.f;
+	}
 	BuildWidgets();
 	if (UHearthBridgeSubsystem* B = Bridge())
 	{
@@ -105,6 +112,52 @@ void AHearthPlayerController::BuildWidgets()
 				]
 			]
 		]
+	]
+	+ SOverlay::Slot().HAlign(HAlign_Center).VAlign(VAlign_Center)
+	[
+		SAssignNew(MenuPanel, SBox).WidthOverride(420.f).Visibility(EVisibility::Collapsed)
+		[
+			SNew(SBorder)
+			.BorderBackgroundColor(FLinearColor(0.f, 0.f, 0.f, 0.85f))
+			.Padding(FMargin(28.f))
+			[
+				SNew(SVerticalBox)
+				+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Center).Padding(0.f, 0.f, 0.f, 18.f)
+				[
+					SNew(STextBlock)
+					.Font(FCoreStyle::GetDefaultFontStyle("Bold", 28))
+					.ColorAndOpacity(FLinearColor(1.f, 0.75f, 0.35f))
+					.Text(FText::FromString(TEXT("Hearth")))
+				]
+				+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 6.f)
+				[
+					SNew(SButton)
+					.HAlign(HAlign_Center)
+					.ContentPadding(FMargin(20.f, 12.f))
+					.OnClicked(FOnClicked::CreateUObject(this, &AHearthPlayerController::OnResumeClicked))
+					[
+						SNew(STextBlock).Font(FCoreStyle::GetDefaultFontStyle("Regular", 18)).Text(FText::FromString(TEXT("Resume")))
+					]
+				]
+				+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 6.f)
+				[
+					SNew(SButton)
+					.HAlign(HAlign_Center)
+					.ContentPadding(FMargin(20.f, 12.f))
+					.OnClicked(FOnClicked::CreateUObject(this, &AHearthPlayerController::OnQuitClicked))
+					[
+						SNew(STextBlock).Font(FCoreStyle::GetDefaultFontStyle("Regular", 18)).Text(FText::FromString(TEXT("Quit to Desktop")))
+					]
+				]
+				+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Center).Padding(0.f, 14.f, 0.f, 0.f)
+				[
+					SNew(STextBlock)
+					.Font(FCoreStyle::GetDefaultFontStyle("Regular", 12))
+					.ColorAndOpacity(FLinearColor(0.7f, 0.7f, 0.7f))
+					.Text(FText::FromString(TEXT("ESC to resume   ·   SPACE near [ AI ] to talk")))
+				]
+			]
+		]
 	];
 	GEngine->GameViewport->AddViewportWidgetContent(SNew(SWeakWidget).PossiblyNullContent(RootWidget.ToSharedRef()), 10);
 }
@@ -161,7 +214,7 @@ void AHearthPlayerController::Tick(float DeltaSeconds)
 
 void AHearthPlayerController::OnSpacePressed()
 {
-	if (!bInDialogue && NearbyAI.IsValid())
+	if (!bInDialogue && !bMenuOpen && NearbyAI.IsValid())
 	{
 		OpenDialogue();
 	}
@@ -173,6 +226,63 @@ void AHearthPlayerController::OnEscapePressed()
 	{
 		CloseDialogue();
 	}
+	else if (bMenuOpen)
+	{
+		CloseMenu();
+	}
+	else
+	{
+		OpenMenu();
+	}
+}
+
+// ---------------------------------------------------------------- escape menu
+
+void AHearthPlayerController::OpenMenu()
+{
+	if (!MenuPanel.IsValid() || bMenuOpen)
+	{
+		return;
+	}
+	bMenuOpen = true;
+	MenuPanel->SetVisibility(EVisibility::Visible);
+	FInputModeGameAndUI Mode;
+	Mode.SetHideCursorDuringCapture(false);
+	SetInputMode(Mode);
+	SetShowMouseCursor(true);
+}
+
+void AHearthPlayerController::CloseMenu()
+{
+	if (!bMenuOpen)
+	{
+		return;
+	}
+	bMenuOpen = false;
+	if (MenuPanel.IsValid())
+	{
+		MenuPanel->SetVisibility(EVisibility::Collapsed);
+	}
+	SetInputMode(FInputModeGameOnly());
+	SetShowMouseCursor(false);
+}
+
+void AHearthPlayerController::QuitGame()
+{
+	UE_LOG(LogHearth, Log, TEXT("Quit requested from menu"));
+	UKismetSystemLibrary::QuitGame(this, this, EQuitPreference::Quit, false);
+}
+
+FReply AHearthPlayerController::OnResumeClicked()
+{
+	CloseMenu();
+	return FReply::Handled();
+}
+
+FReply AHearthPlayerController::OnQuitClicked()
+{
+	QuitGame();
+	return FReply::Handled();
 }
 
 void AHearthPlayerController::OpenDialogue()
@@ -181,6 +291,7 @@ void AHearthPlayerController::OpenDialogue()
 	{
 		return;
 	}
+	CloseMenu();
 	DialogueWith = NearbyAI;
 	bInDialogue = true;
 	Transcript.Empty();

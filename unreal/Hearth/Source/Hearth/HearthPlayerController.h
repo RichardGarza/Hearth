@@ -10,6 +10,7 @@ class SOverlay;
 class STextBlock;
 class SEditableTextBox;
 class SBox;
+class SButton;
 class UHearthBridgeSubsystem;
 
 UCLASS()
@@ -22,9 +23,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hearth") float TalkRange = 700.f;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Hearth") bool bInDialogue = false;
+	UPROPERTY(BlueprintReadOnly, Category = "Hearth") bool bMenuOpen = false;
 
 	UFUNCTION(BlueprintCallable, Category = "Hearth") void OpenDialogue();
 	UFUNCTION(BlueprintCallable, Category = "Hearth") void CloseDialogue();
+	UFUNCTION(BlueprintCallable, Category = "Hearth") void OpenMenu();
+	UFUNCTION(BlueprintCallable, Category = "Hearth") void CloseMenu();
+	UFUNCTION(BlueprintCallable, Category = "Hearth") void QuitGame();
 
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -45,6 +50,7 @@ private:
 	TSharedPtr<STextBlock> TitleText;
 	TSharedPtr<STextBlock> TranscriptText;
 	TSharedPtr<SEditableTextBox> InputBox;
+	TSharedPtr<SBox> MenuPanel;
 
 	UHearthBridgeSubsystem* Bridge() const;
 	void BuildWidgets();
@@ -54,6 +60,8 @@ private:
 	void HandleTextCommitted(const FText& Text, ETextCommit::Type CommitType);
 	FReply HandleInputKeyDown(const FGeometry& Geometry, const FKeyEvent& KeyEvent);
 	void AppendLine(const FString& Line);
+	FReply OnResumeClicked();
+	FReply OnQuitClicked();
 
 	UFUNCTION() void HandleReply(const FString& AgentId, const FString& Text);
 };

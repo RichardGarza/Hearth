@@ -1,0 +1,31 @@
+// The player's body: a third-person walker. Same mannequin as everyone else so you belong in the world.
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GameFramework/Character.h"
+#include "HearthVisitor.generated.h"
+
+class USpringArmComponent;
+class UCameraComponent;
+
+UCLASS()
+class HEARTH_API AHearthVisitor : public ACharacter
+{
+	GENERATED_BODY()
+
+public:
+	AHearthVisitor();
+
+	UPROPERTY(EditAnywhere, Category = "Hearth") float WalkSpeed = 380.f;
+	UPROPERTY(EditAnywhere, Category = "Hearth") float RunSpeed = 720.f;
+
+protected:
+	UPROPERTY(VisibleAnywhere, Category = "Hearth") TObjectPtr<USpringArmComponent> Boom;
+	UPROPERTY(VisibleAnywhere, Category = "Hearth") TObjectPtr<UCameraComponent> Camera;
+
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
+	void MoveForward(float Value);
+	void MoveRight(float Value);
+	void StartRun();
+	void StopRun();
+};

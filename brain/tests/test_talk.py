@@ -58,3 +58,11 @@ async def test_talk_to_scripted_agent_gets_canned_line():
     eng = make_engine()
     reply = await eng.talk("Mara", "Hello")
     assert reply and reply != "..."
+
+
+def test_detic_strips_repeated_openers():
+    from hearth.agents.brain_ollama import detic
+    assert detic("Hey, thanks! We need wood.", None, first=True) == "Hey, thanks! We need wood."
+    assert detic("Hey, thanks! We need wood.", "Hey, thanks for asking.", first=False) == "We need wood."
+    assert detic("Wait, how about the river?", "Wait, how do we start?", first=False) == "How about the river?"
+    assert detic("Sure. The forest is east.", "Nope.", first=False) == "Sure. The forest is east."

@@ -4,6 +4,7 @@
 #include "HearthBridgeSubsystem.h"
 #include "HearthLocation.h"
 #include "HearthPlayerController.h"
+#include "HearthVisitor.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "GameFramework/SpectatorPawn.h"
@@ -15,7 +16,7 @@ AHearthGameMode::AHearthGameMode()
 {
 	AgentClass = AHearthAgent::StaticClass();
 	LocationClass = AHearthLocation::StaticClass();
-	DefaultPawnClass = ASpectatorPawn::StaticClass();   // fly around and watch
+	DefaultPawnClass = AHearthVisitor::StaticClass();   // walk around like everyone else
 	PlayerControllerClass = AHearthPlayerController::StaticClass();
 }
 
@@ -102,18 +103,20 @@ void AHearthGameMode::HandleWorldInit()
 
 void AHearthGameMode::FrameCameraOnCamp()
 {
-	// Put the spectator above and beside camp, looking at it. WASD/mouse still work afterwards.
+	// Stand the visitor on the ground a short walk from camp, facing it.
 	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
 	const UHearthBridgeSubsystem* B = Bridge();
 	if (!PC || !B) { return; }
 	const FHearthLocationInfo* Camp = B->Locations.Find(TEXT("camp"));
 	const FVector CampPos = Ground(Camp ? B->SimToWorld(Camp->PositionMeters) : FVector::ZeroVector);
-	const FVector Eye = CampPos + FVector(-1400.f, -1400.f, 800.f);
+	const FVector Feet = Ground(CampPos + FVector(-1100.f, -1100.f, 0.f)) + FVector(0.f, 0.f, 100.f);
 	if (APawn* P = PC->GetPawn())
 	{
-		P->SetActorLocation(Eye);
+		P->SetActorLocation(Feet, false, nullptr, ETeleportType::TeleportPhysics);
 	}
-	PC->SetControlRotation(UKismetMathLibrary::FindLookAtRotation(Eye, CampPos + FVector(0.f, 0.f, 100.f)));
+	FRotator Look = UKismetMathLibrary::FindLookAtRotation(Feet, CampPos);
+	Look.Pitch = -12.f;
+	PC->SetControlRotation(Look);
 }
 
 void AHearthGameMode::HandleSnapshot()

@@ -33,6 +33,31 @@ LOCAL_HINT = (
 )
 
 
+_OPENERS = ("hey, thanks", "hey thanks", "thanks,", "thanks!", "thank you", "hey there", "hey,", "hi,", "hello,", "wait,", "oh,")
+
+
+def detic(reply: str, previous: str | None, first: bool) -> str:
+    """Small models latch onto an opener ("Hey, thanks...") and repeat it every turn. Cut it off
+    after the first exchange, and cut any opener that matches how the previous reply began."""
+    r = reply.strip()
+    low = r.lower()
+    if not first:
+        for o in _OPENERS:
+            if low.startswith(o):
+                r = r[len(o):].lstrip(" ,.!-—")
+                break
+    if previous:
+        pw, rw = previous.lower().split()[:2], r.lower().split()[:2]
+        if pw and pw == rw:
+            for sep in (", ", ". ", "! ", " - ", " — "):
+                i = r.find(sep)
+                if 0 < i < 40:
+                    r = r[i + len(sep):]
+                    break
+    r = r.strip()
+    return (r[0].upper() + r[1:]) if r else reply
+
+
 class OllamaBrain:
     def __init__(self, cfg: Config) -> None:
         self.cfg = cfg
@@ -54,7 +79,8 @@ class OllamaBrain:
             "model": self.model,
             "stream": False,
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
-            "options": {"temperature": 0.8, "num_predict": max_tokens, "num_ctx": self.cfg.ollama_ctx},
+            "options": {"temperature": 0.8, "num_predict": max_tokens, "num_ctx": self.cfg.ollama_ctx,
+                        "repeat_penalty": 1.15},
         }
         if schema is not None:
             payload["format"] = schema
@@ -99,7 +125,8 @@ class OllamaBrain:
         user = ("YOUR SITUATION RIGHT NOW:\n" + build_perception(world, agent, memory).text.split("\nDecide what to do now.")[0]
                 + "\n\nCONVERSATION SO FAR:\n" + (convo or "(none)") + f"\nVisitor: {visitor_text}\n\nReply as {persona.name}, words only.")
         text = await self._chat(system, user, None, 150)
-        return (text or "...").strip().strip('"')
+        prev = next((t for who, t in reversed(history) if who == "agent"), None)
+        return detic((text or "...").strip().strip('"'), prev, first=not history)
 
     async def reflect(self, persona: Persona, memory: Memory) -> str | None:
         system = WORLD_RULES + "\n\nWHO YOU ARE\n" + persona.sheet()
