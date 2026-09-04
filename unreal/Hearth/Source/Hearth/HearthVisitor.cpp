@@ -128,33 +128,42 @@ void AHearthVisitor::TickDance(float Now)
 	USkeletalMeshComponent* M = GetMesh();
 	if (Now < DanceUntil)
 	{
-		// pelvic thrust forward + bob + a slow spin, legs pumping via the jog clip
-		const float T = DanceUntil - Now;
-		const float Thrust = FMath::Max(0.f, FMath::Sin(Now * 9.f)) * 32.f;
-		const float Bob = FMath::Abs(FMath::Sin(Now * 4.5f)) * 8.f;
-		M->SetRelativeLocation(MeshBaseOffset + FVector(Thrust, 0.f, Bob));
-		M->SetRelativeRotation(FRotator(0.f, -90.f, -12.f + 8.f * FMath::Sin(Now * 9.f)));
-		AddActorWorldRotation(FRotator(0.f, 70.f * GetWorld()->GetDeltaSeconds(), 0.f));
-		if (JogAnim && M->GetSingleNodeInstance() && M->GetSingleNodeInstance()->GetAnimationAsset() != JogAnim)
+		// Legs frozen in the idle pose so the pelvis is the only thing moving.
+		if (IdleAnim && M->GetSingleNodeInstance() && M->GetSingleNodeInstance()->GetAnimationAsset() != IdleAnim)
 		{
-			M->PlayAnimation(JogAnim, true);
-			AnimState = 2;
+			M->PlayAnimation(IdleAnim, true);
+			AnimState = 0;
 		}
-		M->SetPlayRate(1.6f);
-		(void)T;
+		M->SetPlayRate(0.f);
+
+		// Sharp pelvic thrusts at 2.5 Hz: hips forward + lean back, then snap back.
+		const float Phase = FMath::Fmod(Now * 2.5f, 1.f);                       // 0..1 per thrust
+		const float Thrust = FMath::Pow(FMath::Max(0.f, FMath::Sin(Phase * PI)), 0.5f);   // fast in, fast out
+		const float Forward = 55.f * Thrust;                                       // hips out
+		const float Dip = -14.f * Thrust;                                          // knees bend
+		const float LeanBack = 28.f * Thrust;                                      // degrees
+		M->SetRelativeLocation(MeshBaseOffset + FVector(Forward, 0.f, Dip));
+		const FQuat Base(FRotator(0.f, -90.f, 0.f));
+		const FQuat Lean(FRotator(-LeanBack, 0.f, 0.f));                          // pitch back in actor space
+		M->SetRelativeRotation((Lean * Base).Rotator());
+
+		// A half-turn every 2.4 s so it reads as a dance, not a pivot in place.
+		const float Cycle = FMath::Fmod(Now, 2.4f);
+		if (Cycle < 0.4f)
+		{
+			AddActorWorldRotation(FRotator(0.f, 180.f / 0.4f * GetWorld()->GetDeltaSeconds(), 0.f));
+		}
 	}
 	else if (DanceUntil > 0.f)
 	{
 		DanceUntil = 0.f;
 		M->SetRelativeLocation(MeshBaseOffset);
 		M->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
+		M->SetPlayRate(1.f);
 		AnimState = -1;   // let the locomotion driver pick the right clip again
 	}
 }
 
-// Mouse look with two guards: nothing for the first second (the window's initial mouse capture on
-// macOS can deliver one giant delta that pitched the camera straight down), and no single-frame
-// jumps bigger than a hand can make.
 static float LookScale(const APawn* P)
 {
 	const AHearthPlayerController* PC = Cast<AHearthPlayerController>(P->GetController());

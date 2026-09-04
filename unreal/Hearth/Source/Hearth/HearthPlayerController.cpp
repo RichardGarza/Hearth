@@ -284,24 +284,35 @@ void AHearthPlayerController::BuildWidgets()
 
 // ---------------------------------------------------------------- toggles
 
-static void SetCVarInt(const TCHAR* Name, int32 Value)
+static int32 SetCVarInt(const TCHAR* Name, int32 Value)
 {
+	// Project-config values outrank "game setting" priority, so a lower-priority Set is silently ignored.
+	// Console priority wins over everything except code/command line.
 	if (IConsoleVariable* Var = IConsoleManager::Get().FindConsoleVariable(Name))
 	{
-		Var->Set(Value, ECVF_SetByGameSetting);
+		Var->Set(Value, ECVF_SetByConsole);
+		return Var->GetInt();
 	}
+	return -1;
 }
 
 void AHearthPlayerController::SetLumen(bool bOn)
 {
 	bLumen = bOn;
 	// 1 = Lumen, 0 = none (no dynamic GI / screen-space-free reflections). Takes effect immediately.
-	SetCVarInt(TEXT("r.DynamicGlobalIlluminationMethod"), bOn ? 1 : 0);
-	SetCVarInt(TEXT("r.ReflectionMethod"), bOn ? 1 : 0);
+	const int32 GI = SetCVarInt(TEXT("r.DynamicGlobalIlluminationMethod"), bOn ? 1 : 0);
+	const int32 Refl = SetCVarInt(TEXT("r.ReflectionMethod"), bOn ? 1 : 0);
+	SetCVarInt(TEXT("r.Lumen.DiffuseIndirect.Allow"), bOn ? 1 : 0);
 	SetCVarInt(TEXT("r.Lumen.Reflections.Allow"), bOn ? 1 : 0);
 	SaveConfig();
 	RefreshToggleTexts();
-	UE_LOG(LogHearth, Log, TEXT("Lumen %s"), bOn ? TEXT("on") : TEXT("off"));
+	UE_LOG(LogHearth, Log, TEXT("Lumen %s (GI method now %d, reflection method now %d)"), bOn ? TEXT("on") : TEXT("off"), GI, Refl);
+	if (ToastText.IsValid() && GetWorld() && GetWorld()->GetTimeSeconds() > 2.f)
+	{
+		ToastText->SetText(FText::FromString(bOn ? TEXT("Lumen ON: dynamic GI + reflections") : TEXT("Lumen OFF: no dynamic GI (shadows go flat, memory freed)")));
+		ToastText->SetVisibility(EVisibility::HitTestInvisible);
+		ToastUntil = GetWorld()->GetTimeSeconds() + 3.f;
+	}
 }
 
 void AHearthPlayerController::SetVoices(bool bOn)
