@@ -4,7 +4,7 @@
 > to survive. They talk to each other out loud. This is the Matt Shumer "voices in the living room"
 > demo, built for real.
 
-**Owner:** Roberto (rgactr@gmail.com)
+**Owner:** Richard Garza (rgactr@gmail.com)
 **Machine:** MacBook Air, Apple M3 Pro, macOS 26.6, Python 3.13, Node 20
 **Started:** 2026-09-04
 **This file is the source of truth for status.** Update the checkboxes and the Decisions Log as work lands.
@@ -46,13 +46,15 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked (s
 - [x] Event log to `logs/` (JSONL) + readable console transcript
 - [x] CLI: `hearth run --brain scripted|claude --voice say|none`
 - [x] Tests for world rules and the scripted run
-- [ ] **First real run with Claude** — needs `ANTHROPIC_API_KEY` (Roberto)
+- [x] Wire-format test: Claude request shape verified against the SDK with a fake API server (no tokens spent)
+- [ ] **First real run with Claude** — needs `ANTHROPIC_API_KEY` (Richard)
 - [ ] Tune prompts after watching a few in-game days (cooperation, not monologues)
 
 ### Phase 2 — WebSocket bridge
 - [x] Protocol spec (`docs/PROTOCOL.md`)
 - [x] WebSocket server broadcasting world snapshots + speech events
 - [x] Inbound commands (god-mode: trigger storm, drop supplies, whisper to an agent)
+- [x] Verified end-to-end with `brain/scripts/ws_probe.py` (init, snapshots, events, command round-trip)
 - [ ] Reconnect / late-join handling verified against a real Unreal client
 
 ### Phase 3 — Unreal Engine 5 world
@@ -60,7 +62,7 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked (s
 - [x] `HearthBridgeSubsystem` — WebSocket client, JSON parsing, event dispatch
 - [x] `AHearthAgent` — character with name + speech text, moves to location targets
 - [x] `AHearthLocation` — resource node / camp marker actors spawned from the world init message
-- [ ] **Install Unreal Engine 5.4+ and full Xcode** (Roberto — see `docs/SETUP.md`)
+- [ ] **Install Unreal Engine 5.4+ and full Xcode** (Richard — see `docs/SETUP.md`)
 - [ ] Open project, let it compile, build a landscape map with NavMesh
 - [ ] Assign a humanoid skeletal mesh (Mannequin from Third Person template is fine)
 - [ ] Visual state: campfire particle when lit, shelter mesh when built, rain when raining
@@ -78,7 +80,7 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked (s
 
 ---
 
-## 2. What Roberto needs to provide
+## 2. What Richard needs to provide
 
 | Item | Why | Status |
 |---|---|---|
@@ -110,6 +112,8 @@ of continuous running. Override with `HEARTH_MODEL=claude-sonnet-5` for ~40% of 
 | 2026-09-04 | Same-location = hearing range | Simple, and matches how the Unreal map will be laid out (named places, not open field) |
 | 2026-09-04 | macOS `say` for TTS in Phase 1 | Zero setup, distinct voices, runs offline. Swappable backend later |
 | 2026-09-04 | Project name "Hearth" | The campfire is the thing they must keep alive together |
+| 2026-09-04 | Unreal scale: `meters_to_units = 10` (sim km → ~100 m map); walk speed derived from `tick_seconds` | Human-scale map that fits a NavMesh; characters arrive when the sim says they arrive. Run the brain with `--tick-seconds 8` when Unreal is watching |
+| 2026-09-04 | Unreal C++ written blind (no engine installed) | Compile errors expected on first open; they'll be small. Fixing them is the first Phase 3 task after install |
 
 ---
 
@@ -121,7 +125,15 @@ of continuous running. Override with `HEARTH_MODEL=claude-sonnet-5` for ~40% of 
 
 ---
 
-## 6. How to work on this (for future sessions)
+## 6. Session log
+
+| Date | What landed |
+|---|---|
+| 2026-09-04 | Everything in Phase 1 except the live Claude run; Phase 2 server + probe; Phase 3 C++ scaffold (uncompiled). 14 tests green. Git initialized, committed. |
+
+---
+
+## 7. How to work on this (for future sessions)
 
 1. Read this file first. Check the status boxes.
 2. `cd brain && .venv/bin/python -m hearth run --brain scripted --voice none --ticks 60 --tick-seconds 0` runs the world in a second and prints a transcript. If that breaks, fix it before anything else.

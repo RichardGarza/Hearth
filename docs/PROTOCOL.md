@@ -16,9 +16,14 @@ Brain is the server; Unreal (or any viewer) is a client. Multiple clients allowe
   "agents": [
     {"id": "mara", "name": "Mara", "voice": "Samantha", "location": "camp", "x": 0, "y": 0}
   ],
-  "meters_to_units": 100
+  "meters_to_units": 10,
+  "tick_seconds": 3.0,
+  "travel_meters_per_tick": 400
 }
 ```
+`meters_to_units` scales sim meters to Unreal units (the sim valley is ~1 km across; at 10 the map is
+~100 m). `tick_seconds` and `travel_meters_per_tick` let the client pick a walk speed so trips take the
+same wall-clock time on screen as in the sim.
 
 ### `snapshot` (every tick)
 ```json
@@ -36,7 +41,7 @@ Brain is the server; Unreal (or any viewer) is a client. Multiple clients allowe
   ]
 }
 ```
-`x`, `y` are world meters. Unreal multiplies by `meters_to_units`. `moving_to` is the location id the
+`x`, `y` are sim meters. Unreal multiplies by `meters_to_units`. `moving_to` is the location id the
 agent is walking toward, or null.
 
 ### `speech`

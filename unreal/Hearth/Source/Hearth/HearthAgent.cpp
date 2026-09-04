@@ -1,0 +1,136 @@
+#include "HearthAgent.h"
+#include "Hearth.h"
+#include "AIController.h"
+#include "Components/CapsuleComponent.h"
+#include "Components/TextRenderComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Navigation/PathFollowingComponent.h"
+#include "TimerManager.h"
+
+AHearthAgent::AHearthAgent()
+{
+	PrimaryActorTick.bCanEverTick = true;
+	AIControllerClass = AAIController::StaticClass();
+	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+	bUseControllerRotationYaw = false;
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->RotationRate = FRotator(0.f, 540.f, 0.f);
+	GetCharacterMovement()->MaxWalkSpeed = 400.f;
+
+	NameLabel = CreateDefaultSubobject<UTextRenderComponent>(TEXT("NameLabel"));
+	NameLabel->SetupAttachment(RootComponent);
+	NameLabel->SetRelativeLocation(FVector(0.f, 0.f, 110.f));
+	NameLabel->SetHorizontalAlignment(EHTA_Center);
+	NameLabel->SetWorldSize(28.f);
+	NameLabel->SetTextRenderColor(FColor::White);
+
+	SpeechLabel = CreateDefaultSubobject<UTextRenderComponent>(TEXT("SpeechLabel"));
+	SpeechLabel->SetupAttachment(RootComponent);
+	SpeechLabel->SetRelativeLocation(FVector(0.f, 0.f, 150.f));
+	SpeechLabel->SetHorizontalAlignment(EHTA_Center);
+	SpeechLabel->SetWorldSize(22.f);
+	SpeechLabel->SetTextRenderColor(FColor::Yellow);
+
+	StatusLabel = CreateDefaultSubobject<UTextRenderComponent>(TEXT("StatusLabel"));
+	StatusLabel->SetupAttachment(RootComponent);
+	StatusLabel->SetRelativeLocation(FVector(0.f, 0.f, 90.f));
+	StatusLabel->SetHorizontalAlignment(EHTA_Center);
+	StatusLabel->SetWorldSize(14.f);
+	StatusLabel->SetTextRenderColor(FColor(180, 180, 180));
+}
+
+void AHearthAgent::Init(const FString& InId, const FString& InName)
+{
+	AgentId = InId;
+	AgentName = InName;
+	NameLabel->SetText(FText::FromString(InName));
+	SpeechLabel->SetText(FText::GetEmpty());
+	StatusLabel->SetText(FText::GetEmpty());
+#if WITH_EDITOR
+	SetActorLabel(FString::Printf(TEXT("Agent_%s"), *InName));
+#endif
+}
+
+void AHearthAgent::ApplySnapshot(const FHearthAgentSnapshot& Snap, const FVector& TargetWorldPos, float WalkSpeedUnitsPerSec)
+{
+	const bool bActionChanged = Snap.Action != LastAction;
+	Latest = Snap;
+
+	if (!Snap.bAlive)
+	{
+		if (bWasAlive)
+		{
+			bWasAlive = false;
+			StatusLabel->SetText(FText::FromString(TEXT("(dead)")));
+			NameLabel->SetTextRenderColor(FColor(120, 120, 120));
+			if (AAIController* AI = Cast<AAIController>(GetController()))
+			{
+				AI->StopMovement();
+			}
+			OnDied();
+		}
+		return;
+	}
+
+	// Status line under the name: what they're doing + the need that matters most.
+	FString Status = Snap.Action.IsEmpty() ? TEXT("idle") : Snap.Action;
+	if (!Snap.ActionTarget.IsEmpty()) { Status += TEXT(" ") + Snap.ActionTarget; }
+	const float Worst = FMath::Min(FMath::Min(Snap.Needs.Hunger, Snap.Needs.Thirst), FMath::Min(Snap.Needs.Energy, Snap.Needs.Warmth));
+	if (Worst < 30.f)
+	{
+		Status += Snap.Needs.Thirst == Worst ? TEXT(" | thirsty") : Snap.Needs.Hunger == Worst ? TEXT(" | hungry")
+			: Snap.Needs.Warmth == Worst ? TEXT(" | cold") : TEXT(" | exhausted");
+	}
+	StatusLabel->SetText(FText::FromString(Status));
+
+	if (bActionChanged)
+	{
+		LastAction = Snap.Action;
+		OnActionChanged(Snap.Action, Snap.ActionTarget);
+	}
+
+	// Movement: the brain gives us where they are heading; walk there with the nav system.
+	GetCharacterMovement()->MaxWalkSpeed = FMath::Clamp(WalkSpeedUnitsPerSec, 150.f, 3000.f);
+	if (AAIController* AI = Cast<AAIController>(GetController()))
+	{
+		const float Dist2D = FVector::Dist2D(GetActorLocation(), TargetWorldPos);
+		if (Dist2D > 120.f)
+		{
+			if (AI->GetMoveStatus() == EPathFollowingStatus::Idle)
+			{
+				AI->MoveToLocation(TargetWorldPos, 60.f, /*bStopOnOverlap*/ true, /*bUsePathfinding*/ true);
+			}
+		}
+	}
+}
+
+void AHearthAgent::Say(const FString& Text, const FString& ToName)
+{
+	const FString Shown = ToName.IsEmpty() ? Text : FString::Printf(TEXT("(to %s) %s"), *ToName, *Text);
+	SpeechLabel->SetText(FText::FromString(Shown));
+	GetWorldTimerManager().SetTimer(SpeechClearTimer, this, &AHearthAgent::ClearSpeech, SpeechDisplaySeconds, false);
+	OnSay(Text, ToName);
+}
+
+void AHearthAgent::ClearSpeech()
+{
+	SpeechLabel->SetText(FText::GetEmpty());
+}
+
+void AHearthAgent::FaceCamera(UTextRenderComponent* Label) const
+{
+	if (const APlayerCameraManager* Cam = UGameplayStatics::GetPlayerCameraManager(this, 0))
+	{
+		const FVector ToCam = Cam->GetCameraLocation() - Label->GetComponentLocation();
+		Label->SetWorldRotation(FRotationMatrix::MakeFromX(ToCam).Rotator());
+	}
+}
+
+void AHearthAgent::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	FaceCamera(NameLabel);
+	FaceCamera(SpeechLabel);
+	FaceCamera(StatusLabel);
+}

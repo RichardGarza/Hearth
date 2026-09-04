@@ -66,7 +66,9 @@ class Engine:
             "type": "world_init",
             "locations": [loc.to_dict() for loc in self.world.locations.values()],
             "agents": [dict(a.state.to_dict(), voice=a.persona.voice) for a in self.agents.values()],
-            "meters_to_units": 100,
+            "meters_to_units": 10,   # sim world is ~1 km across; Unreal map ~100 m
+            "tick_seconds": self.cfg.tick_seconds,
+            "travel_meters_per_tick": 400,
         }
 
     # ------------------------------------------------------------------ run
