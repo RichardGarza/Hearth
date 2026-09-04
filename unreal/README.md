@@ -1,7 +1,7 @@
 # Hearth — Unreal side
 
-`Hearth/` is a UE5 C++ project. It has never been compiled on this machine yet (no Unreal
-installed). The code is a WebSocket *viewer* for the Python brain in `../brain`.
+`Hearth/` is a UE5 C++ project (compiles on UE 5.8.2 / Xcode 26.6). The code is a WebSocket
+*viewer* for the Python brain in `../brain`.
 
 ## What's in `Source/Hearth`
 
@@ -13,16 +13,24 @@ installed). The code is a WebSocket *viewer* for the Python brain in `../brain`.
 | `AHearthLocation` | Flat cylinder marker + label listing what's here. Point light turns on when the camp fire is lit. Blueprint events `OnFireChanged`, `OnShelterChanged` for particles/meshes. |
 | `HearthTypes.h` | Blueprint-visible structs mirroring `docs/PROTOCOL.md`. |
 
-## First-time steps (after installing UE5 + Xcode)
+## Command-line workflow (no editor UI needed)
 
-1. Right-click `Hearth.uproject` → *Generate Xcode Project* (or just open it; accept the rebuild prompt).
-2. Open in the editor. Make a level: a Landscape or a large scaled cube as ground, a Directional
-   Light, Sky Atmosphere, and a **NavMeshBoundsVolume** scaled to cover roughly 120 m × 120 m
-   around the origin (`P` toggles nav display; it should be green).
-3. Set the level as default map in Project Settings → Maps & Modes (or edit `Config/DefaultEngine.ini`).
-4. Start the brain: `cd ../brain && .venv/bin/python -m hearth run --brain claude --voice say --tick-seconds 8`
+```bash
+UE="/Users/Shared/Epic Games/UE_5.8"
+# compile the game module
+"$UE/Engine/Build/BatchFiles/Mac/Build.sh" HearthEditor Mac Development -Project="$PWD/Hearth/Hearth.uproject" -WaitMutex
+# (re)generate the Valley map: ground, sun, sky, fog, nav bounds, player start, game mode
+"$UE/Engine/Binaries/Mac/UnrealEditor-Cmd" "$PWD/Hearth/Hearth.uproject" -run=pythonscript -script="$PWD/Hearth/Scripts/build_valley_map.py" -unattended -nop4
+# smoke test with the brain, no window
+./run_headless_test.sh
+```
+
+## Watching it for real
+
+1. Start the brain: `cd ../brain && .venv/bin/python -m hearth run --brain claude --voice say --tick-seconds 8`
    (slower ticks give characters time to walk at a believable speed).
-5. Press Play. Output Log filter `LogHearth` shows connection and speech.
+2. Open `Hearth/Hearth.uproject` (double-click, or `open`). The Valley map loads. Press Play.
+   You spawn as a spectator above camp: WASD + mouse to fly. Output Log filter `LogHearth`.
 
 ## Scale
 

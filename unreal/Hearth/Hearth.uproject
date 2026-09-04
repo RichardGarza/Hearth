@@ -16,19 +16,11 @@
 	],
 	"Plugins": [
 		{
-			"Name": "OnlineSubsystemEOS",
+			"Name": "PythonScriptPlugin",
 			"Enabled": true
 		},
 		{
-			"Name": "OnlineSubsystem",
-			"Enabled": true
-		},
-		{
-			"Name": "OnlineSubsystemUtils",
-			"Enabled": true
-		},
-		{
-			"Name": "SocketSubsystemEOS",
+			"Name": "EditorScriptingUtilities",
 			"Enabled": true
 		}
 	]
