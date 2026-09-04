@@ -24,6 +24,14 @@ if not level_sub.new_level(MAP_PATH):
     raise RuntimeError(f"could not create level {MAP_PATH}")
 log(f"created {MAP_PATH}")
 
+def cosmetic(fn, what):
+    """Non-essential tweak: log and continue if the API name differs on this engine version."""
+    try:
+        fn()
+    except Exception as e:  # noqa: BLE001
+        unreal.log_warning(f"skipped {what}: {e}")
+
+
 def spawn(cls, loc=(0, 0, 0), rot=(0, 0, 0), label=None):
     a = actor_sub.spawn_actor_from_class(cls, unreal.Vector(*loc), unreal.Rotator(*rot))
     if label:
@@ -33,25 +41,28 @@ def spawn(cls, loc=(0, 0, 0), rot=(0, 0, 0), label=None):
 # ---- ground: a flat cube, top face at z=0 --------------------------------------
 cube = unreal.load_asset("/Engine/BasicShapes/Cube")
 ground = spawn(unreal.StaticMeshActor, (0, 0, -50), label="Ground")
-ground.static_mesh_component.set_static_mesh(cube)
+ground_mesh = ground.get_component_by_class(unreal.StaticMeshComponent)
+ground_mesh.set_static_mesh(cube)
 ground.set_actor_scale3d(unreal.Vector(GROUND_UNITS / 100.0, GROUND_UNITS / 100.0, 1.0))
-ground.static_mesh_component.set_mobility(unreal.ComponentMobility.STATIC)
+ground_mesh.set_mobility(unreal.ComponentMobility.STATIC)
 grass = unreal.load_asset("/Engine/EngineMaterials/DefaultMaterial")  # placeholder; swap for landscape later
 if grass:
-    ground.static_mesh_component.set_material(0, grass)
+    cosmetic(lambda: ground_mesh.set_material(0, grass), "ground material")
 
 # ---- lighting & sky --------------------------------------------------------------
 sun = spawn(unreal.DirectionalLight, (0, 0, 1000), (-40, 30, 0), label="Sun")
-sun.directional_light_component.set_editor_property("atmosphere_sun_light", True)
-sun.directional_light_component.set_intensity(8.0)
-sun.set_mobility(unreal.ComponentMobility.MOVABLE)      # so day/night can rotate it later
+sun_comp = sun.get_component_by_class(unreal.DirectionalLightComponent)
+cosmetic(lambda: sun_comp.set_editor_property("atmosphere_sun_light", True), "sun atmosphere flag")
+cosmetic(lambda: sun_comp.set_intensity(8.0), "sun intensity")
+cosmetic(lambda: sun_comp.set_mobility(unreal.ComponentMobility.MOVABLE), "sun mobility")  # day/night later
 
 spawn(unreal.SkyAtmosphere, (0, 0, 0), label="SkyAtmosphere")
 sky = spawn(unreal.SkyLight, (0, 0, 500), label="SkyLight")
-sky.light_component.set_editor_property("real_time_capture", True)
-sky.set_mobility(unreal.ComponentMobility.MOVABLE)
+sky_comp = sky.get_component_by_class(unreal.SkyLightComponent)
+cosmetic(lambda: sky_comp.set_editor_property("real_time_capture", True), "sky real-time capture")
+cosmetic(lambda: sky_comp.set_mobility(unreal.ComponentMobility.MOVABLE), "sky mobility")
 fog = spawn(unreal.ExponentialHeightFog, (0, 0, 0), label="Fog")
-fog.component.set_editor_property("fog_density", 0.01)
+cosmetic(lambda: fog.get_component_by_class(unreal.ExponentialHeightFogComponent).set_editor_property("fog_density", 0.01), "fog density")
 
 # ---- navigation ------------------------------------------------------------------
 nav = spawn(unreal.NavMeshBoundsVolume, (0, 0, 0), label="NavBounds")

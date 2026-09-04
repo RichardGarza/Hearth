@@ -32,6 +32,12 @@ void UHearthBridgeSubsystem::Connect()
 	{
 		return;
 	}
+	if (!BrainUrl.StartsWith(TEXT("ws://")) && !BrainUrl.StartsWith(TEXT("wss://")))
+	{
+		// Ini values with an unquoted '//' get truncated by the config parser; fall back to the default.
+		UE_LOG(LogHearth, Warning, TEXT("BrainUrl '%s' is not a ws:// URL; using ws://127.0.0.1:8765"), *BrainUrl);
+		BrainUrl = TEXT("ws://127.0.0.1:8765");
+	}
 	UE_LOG(LogHearth, Log, TEXT("Connecting to brain at %s"), *BrainUrl);
 	Socket = FWebSocketsModule::Get().CreateWebSocket(BrainUrl, TEXT(""));
 	Socket->OnConnected().AddUObject(this, &UHearthBridgeSubsystem::HandleConnected);
