@@ -49,6 +49,14 @@ agent is walking toward, or null.
 {"type": "speech", "tick": 42, "agent": "mara", "to": "jonah", "text": "Jonah, bring water back if you can.", "location": "camp"}
 ```
 
+### `reply` (answer to a `talk`)
+```json
+{"type": "reply", "tick": 42, "agent": "jonah", "text": "We don't have a leader yet.", "visitor_text": "Who's in charge?"}
+```
+
+Agent objects in `world_init` and `snapshot` also carry `"ai": true|false` (driven by a real model,
+can be talked to) and `"talking": true|false`.
+
 ### `event` (anything notable — for HUD/log)
 ```json
 {"type": "event", "tick": 42, "kind": "fire_lit" | "structure_built" | "agent_died" | "storm" | ..., "text": "Mara lit the fire.", "agent": "mara", "location": "camp"}
@@ -63,6 +71,15 @@ agent is walking toward, or null.
 {"type": "command", "name": "whisper", "agent": "mara", "text": "You feel a chill. Winter is coming."}
 {"type": "command", "name": "pause"}   /  {"type": "command", "name": "resume"}
 ```
+
+### `talk` / `talk_end` (typed dialogue with an AI character)
+```json
+{"type": "talk", "agent": "jonah", "text": "Hey, what's going on here?"}
+{"type": "talk_end", "agent": "jonah"}
+```
+While a conversation is open the character stops and waits. If the visitor is silent for 2 minutes the
+brain ends it. Each `talk` produces a `reply` frame (below) and a normal `speech` frame (so it's spoken
+aloud and heard by anyone standing there).
 
 ### `arrived` (optional; Unreal tells the brain a character physically reached its target)
 ```json

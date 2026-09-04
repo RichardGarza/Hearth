@@ -81,6 +81,7 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--effort", default=None, choices=["low", "medium", "high", "xhigh", "max"])
     r.add_argument("--budget", type=float, default=None, help="stop when estimated Claude spend reaches this many dollars")
     r.add_argument("--ollama-model", default=None, help="local model for --brain ollama (default qwen2.5:7b)")
+    r.add_argument("--ai-agents", default=None, help="comma-separated ids that use --brain; everyone else is scripted (e.g. jonah)")
     r.add_argument("--thoughts", action="store_true", help="print agents' private thoughts")
     r.add_argument("--quiet", action="store_true", help="hide action lines, show only speech and events")
     r.add_argument("--no-sync-voice", action="store_true", help="don't pause the world while a line is being spoken")
@@ -128,7 +129,17 @@ async def run(args: argparse.Namespace) -> int:
         brain = ScriptedBrain(seed=cfg.seed)
         print("brain: scripted (no API calls)")
 
-    engine = Engine(cfg=cfg, world=world, brain=brain)
+    ai_ids: set[str] = set()
+    if args.ai_agents and args.brain != "scripted":
+        from hearth.agents.brain_mixed import MixedBrain
+        from hearth.agents.brain_scripted import ScriptedBrain
+        ai_ids = {x.strip().lower() for x in args.ai_agents.split(",") if x.strip()}
+        brain = MixedBrain(default=ScriptedBrain(seed=cfg.seed), overrides={i: brain for i in ai_ids})
+        print(f"ai agents: {', '.join(sorted(ai_ids))} (others scripted)")
+    elif args.brain != "scripted":
+        ai_ids = {p.id for p in personas(args.agents)}
+
+    engine = Engine(cfg=cfg, world=world, brain=brain, ai_agents=ai_ids)
     for p in personas(args.agents):
         engine.add_agent(p)
 

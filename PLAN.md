@@ -78,6 +78,15 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked (s
 - [ ] Day/night via directional light driven by sim time
 - [ ] In-world audio: play TTS at the speaking character's position (spatialized) instead of on the Mac
 
+### Phase 3b — Talk to them (added 2026-09-04 at Richard's request)
+- [x] Ollama installed (Homebrew), `qwen2.5:7b` pulled; `OllamaBrain` with structured-output decisions and conversation
+- [x] Mixed brains: `--ai-agents jonah` puts one person on a real model, everyone else scripted (free)
+- [x] Brain: `talk` / `talk_end` / `reply` over the bridge; the character holds still while talking; 2-minute silence timeout
+- [x] Unreal: AI character marked with `[ AI ]` tag + cyan glow; "Press SPACE to talk to Jonah" prompt within 7 m; Slate chat box; Enter sends; ESC leaves; walking away closes it
+- [ ] Richard tries it in the game window and reports how it feels (reply latency ~1-3 s locally)
+- [ ] Optional: Jonah's replies spoken from his position in the world instead of the Mac speaker
+- [ ] `--budget` cap and Ollama documented in `docs/SETUP.md`
+
 ### Phase 4 — Depth
 - [ ] Reflection/long-term memory that survives restarts (SQLite)
 - [ ] Relationships: trust/affinity between agents affects who they help
@@ -142,6 +151,7 @@ of continuous running. Override with `HEARTH_MODEL=claude-sonnet-5` for ~40% of 
 | Date | What landed |
 |---|---|
 | 2026-09-04 | Everything in Phase 1 except the live Claude run; Phase 2 server + probe; Phase 3 C++ scaffold (uncompiled). 14 tests green. Git initialized, committed. |
+| 2026-09-04 (evening) | Richard asked whether AI/talking is needed at all; decided: local AI on one character you can walk up to and type with. Built Ollama brain, mixed routing, talk protocol, Unreal Space-to-talk dialogue. 17 tests green. |
 | 2026-09-04 (later) | Xcode 26.6 + UE 5.8.2 installed. Module compiles (1 fix). Metal Toolchain installed. Valley map built by Python commandlet. Headless brain→Unreal run passes all checks. Unreal ini gotcha: `//` in a value is a comment; quote URLs. Python `unreal.Rotator` positional order is (roll, pitch, yaw). Bodies: engine mannequin. Camera auto-frames camp. |
 
 ---

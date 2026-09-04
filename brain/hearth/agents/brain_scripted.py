@@ -151,5 +151,14 @@ class ScriptedBrain:
             return dec(ActionType.GATHER, res)
         return dec(ActionType.MOVE_TO, "camp", thought="nothing here")
 
+    async def converse(self, world: World, agent: AgentState, persona: Persona, memory: Memory,
+                       history: list[tuple[str, str]], visitor_text: str) -> str:
+        worst, _ = agent.needs.worst()
+        return self.rng.choice([
+            f"Not now. I'm {worst.replace('energy', 'tired').replace('warmth', 'cold').replace('hunger', 'hungry').replace('thirst', 'thirsty')} and there's work.",
+            "You're not from here, are you? Make yourself useful or stay out of the way.",
+            "If you want to help, the forest's that way. Wood. Lots of it.",
+        ])
+
     async def reflect(self, persona: Persona, memory: Memory) -> str | None:
         return None

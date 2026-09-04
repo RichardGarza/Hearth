@@ -15,6 +15,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FHearthSnapshotDelegate);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FHearthSpeechDelegate, const FString&, AgentId, const FString&, ToAgentId, const FString&, Text);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FHearthEventDelegate, const FString&, Kind, const FString&, Text, const FString&, AgentId, const FString&, LocationId);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHearthConnectionDelegate, bool, bConnected);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHearthReplyDelegate, const FString&, AgentId, const FString&, Text);
 
 UCLASS(Config = Game)
 class HEARTH_API UHearthBridgeSubsystem : public UGameInstanceSubsystem
@@ -45,6 +46,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Hearth")
 	void SendCommand(const FString& Name, const FString& ExtraJson = "");
 
+	/** Typed dialogue with an AI character. The answer arrives on OnReply. */
+	UFUNCTION(BlueprintCallable, Category = "Hearth")
+	void SendTalk(const FString& AgentId, const FString& Text);
+
+	UFUNCTION(BlueprintCallable, Category = "Hearth")
+	void SendTalkEnd(const FString& AgentId);
+
 	// ---- latest state (read after OnWorldInit / OnSnapshot) ----
 	UPROPERTY(BlueprintReadOnly, Category = "Hearth") TMap<FString, FHearthLocationInfo> Locations;
 	UPROPERTY(BlueprintReadOnly, Category = "Hearth") TMap<FString, FHearthAgentSnapshot> Agents;
@@ -63,6 +71,7 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Hearth") FHearthSpeechDelegate OnSpeech;
 	UPROPERTY(BlueprintAssignable, Category = "Hearth") FHearthEventDelegate OnEvent;
 	UPROPERTY(BlueprintAssignable, Category = "Hearth") FHearthConnectionDelegate OnConnectionChanged;
+	UPROPERTY(BlueprintAssignable, Category = "Hearth") FHearthReplyDelegate OnReply;
 
 	/** World position (units) for a sim position in meters. Z is left at 0; GameMode grounds it. */
 	FVector SimToWorld(const FVector2D& Meters) const { return FVector(Meters.X * MetersToUnits, Meters.Y * MetersToUnits, 0.f); }
@@ -77,6 +86,7 @@ private:
 	void HandleClosed(int32 StatusCode, const FString& Reason, bool bWasClean);
 	void HandleMessage(const FString& Message);
 	void ScheduleReconnect();
+	void SendJson(const TSharedRef<FJsonObject>& Obj);
 
 	void ParseWorldInit(const TSharedPtr<FJsonObject>& Obj);
 	void ParseSnapshot(const TSharedPtr<FJsonObject>& Obj);

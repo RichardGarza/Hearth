@@ -21,6 +21,16 @@ cd brain
 
 You'll hear the six of them start talking.
 
+## Free local AI on one character (Ollama)
+
+```bash
+cd brain
+.venv/bin/python -m hearth run --brain ollama --ai-agents jonah --voice say --tick-seconds 6
+```
+Jonah thinks and talks with a local model (qwen2.5:7b via Ollama, no API key, nothing leaves the Mac).
+Everyone else is scripted. In Unreal he's marked `[ AI ]` with a cyan glow: fly up to him, press
+**SPACE**, type, **ESC** to walk away. Needs `ollama serve` running (installed via Homebrew).
+
 ## Real agents
 
 ```bash

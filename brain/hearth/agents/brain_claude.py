@@ -15,7 +15,7 @@ import anthropic
 
 from hearth.agents.memory import Memory
 from hearth.agents.persona import Persona
-from hearth.agents.prompts import REFLECTION_PROMPT, system_blocks
+from hearth.agents.prompts import CONVERSE_RULES, REFLECTION_PROMPT, system_blocks
 from hearth.agents.schema import DECISION_SCHEMA, Decision
 from hearth.config import Config
 from hearth.world.state import AgentState, World
@@ -83,6 +83,33 @@ class ClaudeBrain:
             log.error("%s: unparseable decision: %r", persona.name, text[:200])
             return Decision.wait(thought="(bad json)", plan=memory.plan)
         return Decision.from_json(data)
+
+    # ------------------------------------------------------------------ converse
+    async def converse(self, world: World, agent: AgentState, persona: Persona, memory: Memory,
+                       history: list[tuple[str, str]], visitor_text: str) -> str:
+        from hearth.agents.perception import build_perception
+        situation = build_perception(world, agent, memory).text.split("\nDecide what to do now.")[0]
+        messages = [{"role": "user", "content": "YOUR SITUATION RIGHT NOW:\n" + situation + "\n\n" + CONVERSE_RULES}]
+        first = True
+        for who, text in history[-12:]:
+            role = "user" if who == "visitor" else "assistant"
+            if first and role == "assistant":
+                messages.append({"role": "user", "content": "(the visitor approaches)"})
+            first = False
+            messages.append({"role": role, "content": text})
+        messages.append({"role": "user", "content": visitor_text})
+        async with self.sem:
+            try:
+                resp = await self.client.messages.create(
+                    model=self.cfg.model, max_tokens=300, system=system_blocks(persona),
+                    messages=messages, output_config={"effort": "low"})
+            except anthropic.APIError as e:
+                log.error("%s: converse failed: %s", persona.name, e)
+                return "..."
+        self._track(resp)
+        if resp.stop_reason == "refusal":
+            return "..."
+        return next((b.text for b in resp.content if b.type == "text"), "...").strip()
 
     # ------------------------------------------------------------------ reflect
     async def reflect(self, persona: Persona, memory: Memory) -> str | None:

@@ -47,6 +47,12 @@ class BridgeServer:
     def on_snapshot(self, snap: dict[str, Any]) -> None:
         self._send_all(snap)
 
+    async def _talk(self, agent: str, text: str) -> None:
+        try:
+            await self.engine.talk(agent, text)   # the reply is broadcast as a `reply` frame by the engine
+        except Exception:
+            log.exception("talk failed")
+
     # ---- inbound
     async def _handler(self, ws: ServerConnection) -> None:
         self.clients.add(ws)
@@ -63,6 +69,11 @@ class BridgeServer:
                     kw = {k: v for k, v in msg.items() if k not in ("type", "name")}
                     result = await self.engine.command(msg.get("name", ""), **kw)
                     await ws.send(json.dumps({"type": "command_result", "name": msg.get("name"), "result": result}))
+                elif msg.get("type") == "talk":
+                    # answered in the background so the tick loop and other clients aren't blocked
+                    asyncio.create_task(self._talk(msg.get("agent", ""), msg.get("text", "")))
+                elif msg.get("type") == "talk_end":
+                    await self.engine.end_talk(msg.get("agent", ""))
                 elif msg.get("type") == "arrived":
                     pass  # brain owns movement for now; see PROTOCOL.md
         except Exception as e:  # connection closed etc.

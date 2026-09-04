@@ -3,6 +3,7 @@
 #include "HearthAgent.h"
 #include "HearthBridgeSubsystem.h"
 #include "HearthLocation.h"
+#include "HearthPlayerController.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "GameFramework/SpectatorPawn.h"
@@ -15,6 +16,7 @@ AHearthGameMode::AHearthGameMode()
 	AgentClass = AHearthAgent::StaticClass();
 	LocationClass = AHearthLocation::StaticClass();
 	DefaultPawnClass = ASpectatorPawn::StaticClass();   // fly around and watch
+	PlayerControllerClass = AHearthPlayerController::StaticClass();
 }
 
 UHearthBridgeSubsystem* AHearthGameMode::Bridge() const
@@ -89,7 +91,7 @@ void AHearthGameMode::HandleWorldInit()
 		AHearthAgent* Actor = GetWorld()->SpawnActor<AHearthAgent>(AgentClass, Pos, FRotator::ZeroRotator, Params);
 		if (Actor)
 		{
-			Actor->Init(Snap->Id, Snap->Name);
+			Actor->Init(Snap->Id, Snap->Name, Snap->bIsAI);
 			AgentActors.Add(Id, Actor);
 		}
 		++Index;

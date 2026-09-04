@@ -19,6 +19,7 @@ class EventKind(str, Enum):
     SYSTEM = "system"        # god-mode / observer messages
     THOUGHT = "thought"      # agent inner thought (never heard by others; logged)
     REFLECTION = "reflection"
+    REPLY = "reply"          # an AI character answering the visitor (typed dialogue)
 
 
 @dataclass
@@ -38,6 +39,8 @@ class Event:
         if self.kind == EventKind.SPEECH:
             d["type"] = "speech"
             d["to"] = self.to
+        elif self.kind == EventKind.REPLY:
+            d["type"] = "reply"
         d.update(self.extra)
         return d
 

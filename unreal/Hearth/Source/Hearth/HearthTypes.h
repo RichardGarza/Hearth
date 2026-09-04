@@ -30,6 +30,8 @@ struct FHearthAgentSnapshot
 	UPROPERTY(BlueprintReadOnly) FString ActionTarget;
 	UPROPERTY(BlueprintReadOnly) FVector2D PositionMeters = FVector2D::ZeroVector;
 	UPROPERTY(BlueprintReadOnly) bool bAlive = true;
+	UPROPERTY(BlueprintReadOnly) bool bIsAI = false;      // driven by a real model; you can talk to them
+	UPROPERTY(BlueprintReadOnly) bool bTalking = false;   // currently in a typed conversation with the visitor
 	UPROPERTY(BlueprintReadOnly) FHearthNeeds Needs;
 	UPROPERTY(BlueprintReadOnly) TMap<FString, int32> Inventory;
 };

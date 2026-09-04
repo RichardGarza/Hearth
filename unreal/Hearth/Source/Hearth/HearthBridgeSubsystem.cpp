@@ -5,6 +5,7 @@
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
+#include "Serialization/JsonWriter.h"
 #include "Engine/GameInstance.h"
 #include "TimerManager.h"
 
@@ -91,6 +92,36 @@ void UHearthBridgeSubsystem::SendCommand(const FString& Name, const FString& Ext
 	Socket->Send(Body);
 }
 
+void UHearthBridgeSubsystem::SendJson(const TSharedRef<FJsonObject>& Obj)
+{
+	if (!IsConnected())
+	{
+		UE_LOG(LogHearth, Warning, TEXT("SendJson: not connected"));
+		return;
+	}
+	FString Out;
+	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&Out);
+	FJsonSerializer::Serialize(Obj, Writer);
+	Socket->Send(Out);
+}
+
+void UHearthBridgeSubsystem::SendTalk(const FString& AgentId, const FString& Text)
+{
+	TSharedRef<FJsonObject> Obj = MakeShared<FJsonObject>();
+	Obj->SetStringField(TEXT("type"), TEXT("talk"));
+	Obj->SetStringField(TEXT("agent"), AgentId);
+	Obj->SetStringField(TEXT("text"), Text);
+	SendJson(Obj);
+}
+
+void UHearthBridgeSubsystem::SendTalkEnd(const FString& AgentId)
+{
+	TSharedRef<FJsonObject> Obj = MakeShared<FJsonObject>();
+	Obj->SetStringField(TEXT("type"), TEXT("talk_end"));
+	Obj->SetStringField(TEXT("agent"), AgentId);
+	SendJson(Obj);
+}
+
 // ---------------------------------------------------------------- socket callbacks
 
 void UHearthBridgeSubsystem::HandleConnected()
@@ -148,6 +179,10 @@ void UHearthBridgeSubsystem::HandleMessage(const FString& Message)
 		FString To;
 		Obj->TryGetStringField(TEXT("to"), To);
 		OnSpeech.Broadcast(Obj->GetStringField(TEXT("agent")), To, Obj->GetStringField(TEXT("text")));
+	}
+	else if (Type == TEXT("reply"))
+	{
+		OnReply.Broadcast(Obj->GetStringField(TEXT("agent")), Obj->GetStringField(TEXT("text")));
 	}
 	else if (Type == TEXT("event"))
 	{
@@ -239,6 +274,8 @@ void UHearthBridgeSubsystem::ParseAgent(const TSharedPtr<FJsonObject>& Obj, FHea
 		Out.PositionMeters = FVector2D(X, Y);
 	}
 	Obj->TryGetBoolField(TEXT("alive"), Out.bAlive);
+	Obj->TryGetBoolField(TEXT("ai"), Out.bIsAI);
+	Obj->TryGetBoolField(TEXT("talking"), Out.bTalking);
 	const TSharedPtr<FJsonObject>* Needs = nullptr;
 	if (Obj->TryGetObjectField(TEXT("needs"), Needs))
 	{
@@ -316,6 +353,7 @@ void UHearthBridgeSubsystem::ParseSnapshot(const TSharedPtr<FJsonObject>& Obj)
 		if (const FHearthAgentSnapshot* Existing = Agents.Find(Snap.Id))
 		{
 			Snap.Voice = Existing->Voice;
+			Snap.bIsAI = Snap.bIsAI || Existing->bIsAI;
 		}
 		if (!Agents.Contains(Snap.Id))
 		{

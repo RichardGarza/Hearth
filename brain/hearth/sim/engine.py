@@ -31,6 +31,12 @@ class AgentRuntime:
     memory: Memory
     state: AgentState
     reflecting: asyncio.Task | None = None
+    is_ai: bool = False
+    convo: list[tuple[str, str]] = field(default_factory=list)   # ("visitor"|"agent", text)
+    convo_last: float = 0.0
+    in_convo: bool = False
+
+CONVO_TIMEOUT_S = 120.0   # visitor silent this long -> the character goes back to work
 
 
 @dataclass
@@ -42,6 +48,7 @@ class Engine:
     snapshot_sinks: list[Callable[[dict[str, Any]], Awaitable[None] | None]] = field(default_factory=list)
     drain_hooks: list[Callable[[], Awaitable[None]]] = field(default_factory=list)  # e.g. wait for TTS
     agents: dict[str, AgentRuntime] = field(default_factory=dict)
+    ai_agents: set[str] = field(default_factory=set)   # ids driven by a real model (shown as AI in Unreal)
     paused: bool = False
     stopped: bool = False
 
@@ -56,16 +63,19 @@ class Engine:
         st.needs.thirst -= r.uniform(0, 15)
         st.needs.energy -= r.uniform(0, 10)
         self.world.agents[st.id] = st
-        rt = AgentRuntime(persona=persona, state=st,
+        rt = AgentRuntime(persona=persona, state=st, is_ai=persona.id in self.ai_agents,
                           memory=Memory(window=self.cfg.episodic_window, reflect_every=self.cfg.reflect_every))
         self.agents[st.id] = rt
         return rt
+
+    def _agent_dicts(self) -> list[dict[str, Any]]:
+        return [dict(a.state.to_dict(), ai=a.is_ai, talking=a.in_convo) for a in self.agents.values()]
 
     def world_init_message(self) -> dict[str, Any]:
         return {
             "type": "world_init",
             "locations": [loc.to_dict() for loc in self.world.locations.values()],
-            "agents": [dict(a.state.to_dict(), voice=a.persona.voice) for a in self.agents.values()],
+            "agents": [dict(d, voice=self.agents[d["id"]].persona.voice) for d in self._agent_dicts()],
             "meters_to_units": 10,   # sim world is ~1 km across; Unreal map ~100 m
             "tick_seconds": self.cfg.tick_seconds,
             "travel_meters_per_tick": 400,
@@ -148,6 +158,12 @@ class Engine:
                     log.exception("brain failed for %s", rt.persona.name, exc_info=res)
                     res = Decision.wait(thought="(brain error)", plan=rt.memory.plan)
                 await self._apply(rt, res)
+
+        # 5b conversations that went quiet
+        now = time.monotonic()
+        for rt in self.agents.values():
+            if rt.in_convo and now - rt.convo_last > CONVO_TIMEOUT_S:
+                await self.end_talk(rt.state.id)
 
         # 6 reflections in the background
         for rt in self.agents.values():
@@ -240,10 +256,60 @@ class Engine:
 
     async def _emit_snapshot(self) -> None:
         snap = self.world.snapshot()
+        snap["agents"] = self._agent_dicts()
         for sink in self.snapshot_sinks:
             r = sink(snap)
             if asyncio.iscoroutine(r):
                 await r
+
+    # ------------------------------------------------------------------ visitor dialogue
+    async def talk(self, agent_name: str, text: str) -> str:
+        """The player (a 'visitor') says something to a character. Returns the spoken reply."""
+        st = self.world.agent_by_name(agent_name)
+        if st is None or not st.alive:
+            return "..."
+        rt = self.agents[st.id]
+        w = self.world
+        text = text.strip()
+        if not text:
+            return ""
+        if not rt.in_convo:
+            rt.in_convo = True
+            rt.convo = []
+            # hold them here for the conversation (a walk in progress finishes first)
+            if st.current is None or st.current.type in INTERRUPTIBLE:
+                st.current = Action(type=ActionType.WAIT)
+                st.busy_until = w.clock.tick + 10_000
+        rt.convo_last = time.monotonic()
+        rt.convo.append(("visitor", text))
+        rt.memory.remember(f'[{w.clock.label()}] A visitor, a stranger not from the valley, said to you: "{text}"')
+        try:
+            reply = await self.brain.converse(w, st, rt.persona, rt.memory, rt.convo[:-1], text) if hasattr(self.brain, "converse") else "..."
+        except Exception:
+            log.exception("converse failed for %s", rt.persona.name)
+            reply = "..."
+        reply = (reply or "...").strip()
+        rt.convo.append(("agent", reply))
+        rt.memory.remember(f'[{w.clock.label()}] You said to the visitor: "{reply}"')
+        tick = w.clock.tick
+        await self.bus.publish(Event(kind=EventKind.REPLY, text=reply, agent=st.id, location=st.location, tick=tick,
+                                     extra={"visitor_text": text, "name": st.name}))
+        # heard by everyone present and spoken aloud, like any other line
+        await self._publish_and_remember([Event(kind=EventKind.SPEECH, text=reply, agent=st.id, to=None, location=st.location,
+                                                tick=tick, extra={"voice": rt.persona.voice, "name": st.name, "to_visitor": True})])
+        return reply
+
+    async def end_talk(self, agent_name: str) -> None:
+        st = self.world.agent_by_name(agent_name)
+        if st is None:
+            return
+        rt = self.agents[st.id]
+        if not rt.in_convo:
+            return
+        rt.in_convo = False
+        rt.memory.remember(f"[{self.world.clock.label()}] The visitor walked away.")
+        if st.current is not None and st.current.type == ActionType.WAIT:
+            st.busy_until = self.world.clock.tick   # decide again next tick
 
     # ------------------------------------------------------------------ god mode
     async def command(self, name: str, **kw: Any) -> str:

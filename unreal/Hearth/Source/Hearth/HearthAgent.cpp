@@ -2,6 +2,7 @@
 #include "Hearth.h"
 #include "AIController.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/PointLightComponent.h"
 #include "Components/TextRenderComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -54,13 +55,38 @@ AHearthAgent::AHearthAgent()
 	StatusLabel->SetHorizontalAlignment(EHTA_Center);
 	StatusLabel->SetWorldSize(14.f);
 	StatusLabel->SetTextRenderColor(FColor(180, 180, 180));
+
+	// Marker for the one(s) driven by a real model: a floating "AI" tag and a soft cyan glow.
+	AILabel = CreateDefaultSubobject<UTextRenderComponent>(TEXT("AILabel"));
+	AILabel->SetupAttachment(RootComponent);
+	AILabel->SetRelativeLocation(FVector(0.f, 0.f, 200.f));
+	AILabel->SetHorizontalAlignment(EHTA_Center);
+	AILabel->SetWorldSize(34.f);
+	AILabel->SetTextRenderColor(FColor::Cyan);
+	AILabel->SetText(FText::FromString(TEXT("[ AI ]")));
+	AILabel->SetVisibility(false);
+
+	AIGlow = CreateDefaultSubobject<UPointLightComponent>(TEXT("AIGlow"));
+	AIGlow->SetupAttachment(RootComponent);
+	AIGlow->SetRelativeLocation(FVector(0.f, 0.f, 120.f));
+	AIGlow->SetLightColor(FLinearColor(0.2f, 0.9f, 1.f));
+	AIGlow->SetIntensity(3000.f);
+	AIGlow->SetAttenuationRadius(500.f);
+	AIGlow->SetVisibility(false);
 }
 
-void AHearthAgent::Init(const FString& InId, const FString& InName)
+void AHearthAgent::Init(const FString& InId, const FString& InName, bool bInIsAI)
 {
 	AgentId = InId;
 	AgentName = InName;
+	bIsAI = bInIsAI;
 	NameLabel->SetText(FText::FromString(InName));
+	if (bIsAI)
+	{
+		NameLabel->SetTextRenderColor(FColor::Cyan);
+		AILabel->SetVisibility(true);
+		AIGlow->SetVisibility(true);
+	}
 	SpeechLabel->SetText(FText::GetEmpty());
 	StatusLabel->SetText(FText::GetEmpty());
 #if WITH_EDITOR
@@ -149,4 +175,10 @@ void AHearthAgent::Tick(float DeltaSeconds)
 	FaceCamera(NameLabel);
 	FaceCamera(SpeechLabel);
 	FaceCamera(StatusLabel);
+	if (bIsAI)
+	{
+		FaceCamera(AILabel);
+		// gentle bob so the tag catches the eye
+		AILabel->SetRelativeLocation(FVector(0.f, 0.f, 200.f + 8.f * FMath::Sin(GetWorld()->GetTimeSeconds() * 2.f)));
+	}
 }

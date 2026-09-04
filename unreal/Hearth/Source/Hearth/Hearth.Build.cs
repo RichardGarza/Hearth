@@ -10,7 +10,8 @@ public class Hearth : ModuleRules
 		{
 			"Core", "CoreUObject", "Engine", "InputCore",
 			"AIModule", "NavigationSystem",
-			"WebSockets", "Json", "JsonUtilities"
+			"WebSockets", "Json", "JsonUtilities",
+			"Slate", "SlateCore"
 		});
 	}
 }

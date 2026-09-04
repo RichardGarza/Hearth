@@ -17,7 +17,7 @@ import urllib.request
 
 from hearth.agents.memory import Memory
 from hearth.agents.persona import Persona
-from hearth.agents.prompts import REFLECTION_PROMPT, WORLD_RULES
+from hearth.agents.prompts import CONVERSE_RULES, REFLECTION_PROMPT, WORLD_RULES
 from hearth.agents.schema import DECISION_SCHEMA, Decision
 from hearth.config import Config
 from hearth.world.state import AgentState, World
@@ -90,6 +90,16 @@ class OllamaBrain:
         except (json.JSONDecodeError, AttributeError, TypeError):
             log.error("%s: unparseable local decision: %r", persona.name, text[:200])
             return Decision.wait(thought="(bad json)", plan=memory.plan)
+
+    async def converse(self, world: World, agent: AgentState, persona: Persona, memory: Memory,
+                       history: list[tuple[str, str]], visitor_text: str) -> str:
+        from hearth.agents.perception import build_perception
+        system = WORLD_RULES + "\n\nWHO YOU ARE\n" + persona.sheet() + "\n\n" + CONVERSE_RULES
+        convo = "\n".join(f"{'Visitor' if who == 'visitor' else persona.name}: {text}" for who, text in history[-12:])
+        user = ("YOUR SITUATION RIGHT NOW:\n" + build_perception(world, agent, memory).text.split("\nDecide what to do now.")[0]
+                + "\n\nCONVERSATION SO FAR:\n" + (convo or "(none)") + f"\nVisitor: {visitor_text}\n\nReply as {persona.name}, words only.")
+        text = await self._chat(system, user, None, 150)
+        return (text or "...").strip().strip('"')
 
     async def reflect(self, persona: Persona, memory: Memory) -> str | None:
         system = WORLD_RULES + "\n\nWHO YOU ARE\n" + persona.sheet()
