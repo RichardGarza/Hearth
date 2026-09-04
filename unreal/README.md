@@ -33,7 +33,11 @@ from the brain's travel speed and `tick_seconds` so trips take the same time on 
 ## Next visual steps (see PLAN.md Phase 3)
 
 - Subclass `AHearthAgent` as `BP_HearthAgent`, assign a skeletal mesh + AnimBP, set it in a
-  `BP_HearthGameMode`'s `AgentClass`.
+  `BP_HearthGameMode`'s `AgentClass`. Meshes: Epic's free Fab characters
+  (https://www.fab.com/sellers/Epic%20Games?listing_types=3d-model&categories=characters-creatures)
+  are rigged to the UE5 skeleton already. Sketchfab (https://sketchfab.com/tags/blender) has more
+  variety but needs rigging/retargeting. Give each of the six a visibly different look; a
+  per-agent mesh map (agent id → mesh) in `BP_HearthGameMode` is the simple way.
 - Subclass `AHearthLocation` as `BP_HearthLocation`; implement `OnFireChanged` (Niagara fire),
   `OnShelterChanged` (swap in a lean-to mesh).
 - Drive the Directional Light's rotation from `Bridge->WorldTime` for day/night.

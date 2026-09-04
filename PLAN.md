@@ -64,7 +64,10 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked (s
 - [x] `AHearthLocation` — resource node / camp marker actors spawned from the world init message
 - [ ] **Install Unreal Engine 5.4+ and full Xcode** (Richard — see `docs/SETUP.md`)
 - [ ] Open project, let it compile, build a landscape map with NavMesh
-- [ ] Assign a humanoid skeletal mesh (Mannequin from Third Person template is fine)
+- [ ] Assign humanoid skeletal meshes. Sources Richard picked (2026-09-04):
+  - Fab, Epic Games seller, characters: https://www.fab.com/sellers/Epic%20Games?listing_types=3d-model&categories=characters-creatures — **prefer these**: free, already rigged to the UE5 skeleton, animations work without retargeting (Paragon heroes, City Sample crowd people, Mannequins)
+  - Sketchfab Blender tag: https://sketchfab.com/tags/blender — check license (CC-BY is fine), and expect to rig/retarget via IK Rig before they animate
+  - Six distinct-looking people, ideally matching the personas (ages 24 to 63, mixed)
 - [ ] Visual state: campfire particle when lit, shelter mesh when built, rain when raining
 - [ ] Day/night via directional light driven by sim time
 - [ ] In-world audio: play TTS at the speaking character's position (spatialized) instead of on the Mac
