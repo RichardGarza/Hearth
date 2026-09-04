@@ -2,8 +2,9 @@ brain/.venv/
 brain/**/__pycache__/
 brain/.pytest_cache/
 brain/*.egg-info/
-logs/*.jsonl
-logs/*.txt
+# run logs are local only (Unreal logs are huge and full of GUIDs that trip secret scanners)
+logs/*
+!logs/.gitkeep
 .env
 
 # Unreal
@@ -14,3 +15,7 @@ unreal/Hearth/Saved/
 unreal/Hearth/.vs/
 unreal/Hearth/*.xcworkspace/
 *.DS_Store
+
+# Unreal user-level config written by the editor at runtime
+unreal/Hearth/Config/Mac/
+unreal/Hearth/Saved/

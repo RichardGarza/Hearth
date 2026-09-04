@@ -42,6 +42,10 @@
 		{
 			"Name": "EOSShared",
 			"Enabled": true
+		},
+		{
+			"Name": "AndroidFileServer",
+			"Enabled": false
 		}
 	]
 }
