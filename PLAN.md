@@ -129,7 +129,7 @@ of continuous running. Override with `HEARTH_MODEL=claude-sonnet-5` for ~40% of 
 
 ## 5. Open questions
 
-- **Epic Online Services block in `unreal/Hearth/Config/DefaultEngine.ini`** (pasted 2026-09-04, contains a ClientSecret). Not needed for Hearth (no multiplayer); the EOS plugin isn't enabled so the engine just warns and falls back. It is in git history (local only, no remote). Decide: remove it, or keep EOS and move the secret out of the repo before ever pushing.
+- ~~Epic Online Services block in the engine ini~~ Removed 2026-09-04 and scrubbed from git history before the first push. If EOS is ever wanted, keep credentials out of the repo (Richard's call).
 
 - How many agents for the first Unreal build? 6 is the persona count; 4 keeps costs lower.
 - Should the world be persistent across runs (agents remember yesterday)? Leaning yes, Phase 4.
