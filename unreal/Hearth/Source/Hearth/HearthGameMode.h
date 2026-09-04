@@ -39,6 +39,7 @@ protected:
 	UFUNCTION() void HandleEvent(const FString& Kind, const FString& Text, const FString& AgentId, const FString& LocationId);
 
 	UHearthBridgeSubsystem* Bridge() const;
+	void FrameCameraOnCamp();
 	FVector Ground(const FVector& XY) const;
 	FVector StandingSpot(const FString& LocationId, int32 AgentIndex) const;
 };

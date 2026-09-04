@@ -6,6 +6,9 @@
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "GameFramework/SpectatorPawn.h"
+#include "GameFramework/PlayerController.h"
+#include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 
 AHearthGameMode::AHearthGameMode()
 {
@@ -92,6 +95,23 @@ void AHearthGameMode::HandleWorldInit()
 		++Index;
 	}
 	UE_LOG(LogHearth, Log, TEXT("Spawned %d locations, %d agents"), LocationActors.Num(), AgentActors.Num());
+	FrameCameraOnCamp();
+}
+
+void AHearthGameMode::FrameCameraOnCamp()
+{
+	// Put the spectator above and beside camp, looking at it. WASD/mouse still work afterwards.
+	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+	const UHearthBridgeSubsystem* B = Bridge();
+	if (!PC || !B) { return; }
+	const FHearthLocationInfo* Camp = B->Locations.Find(TEXT("camp"));
+	const FVector CampPos = Ground(Camp ? B->SimToWorld(Camp->PositionMeters) : FVector::ZeroVector);
+	const FVector Eye = CampPos + FVector(-1400.f, -1400.f, 800.f);
+	if (APawn* P = PC->GetPawn())
+	{
+		P->SetActorLocation(Eye);
+	}
+	PC->SetControlRotation(UKismetMathLibrary::FindLookAtRotation(Eye, CampPos + FVector(0.f, 0.f, 100.f)));
 }
 
 void AHearthGameMode::HandleSnapshot()
