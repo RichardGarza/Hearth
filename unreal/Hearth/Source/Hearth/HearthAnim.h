@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimSequence.h"
+#include "Animation/AnimSingleNodeInstance.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/Character.h"
 #include "UObject/ConstructorHelpers.h"
@@ -21,7 +22,10 @@ namespace HearthAnim
 		if (!M || !Idle || !Walk) { return; }
 		const float Speed = C->GetVelocity().Size2D();
 		const bool bNowWalking = Speed > 20.f;
-		if (bNowWalking != bWalking || !M->IsPlaying())
+		// A single-node instance with no clip still reports IsPlaying()==true, so check the asset itself.
+		const UAnimSingleNodeInstance* Single = M->GetSingleNodeInstance();
+		const bool bNothingLoaded = !Single || Single->GetAnimationAsset() == nullptr;
+		if (bNowWalking != bWalking || bNothingLoaded)
 		{
 			bWalking = bNowWalking;
 			M->PlayAnimation(bWalking ? Walk : Idle, true);

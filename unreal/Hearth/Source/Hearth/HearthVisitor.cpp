@@ -64,8 +64,8 @@ void AHearthVisitor::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 	PlayerInputComponent->BindAxis("MoveForward", this, &AHearthVisitor::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AHearthVisitor::MoveRight);
-	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
-	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
+	PlayerInputComponent->BindAxis("Turn", this, &AHearthVisitor::Turn);
+	PlayerInputComponent->BindAxis("LookUp", this, &AHearthVisitor::LookUp);
 	PlayerInputComponent->BindKey(EKeys::LeftShift, IE_Pressed, this, &AHearthVisitor::StartRun);
 	PlayerInputComponent->BindKey(EKeys::LeftShift, IE_Released, this, &AHearthVisitor::StopRun);
 }
@@ -86,6 +86,27 @@ void AHearthVisitor::MoveRight(float Value)
 		const FRotator YawRot(0.f, Controller->GetControlRotation().Yaw, 0.f);
 		AddMovementInput(FRotationMatrix(YawRot).GetUnitAxis(EAxis::Y), Value);
 	}
+}
+
+void AHearthVisitor::BeginPlay()
+{
+	Super::BeginPlay();
+	LookEnabledAt = GetWorld()->GetTimeSeconds() + 1.0f;
+}
+
+// Mouse look with two guards: nothing for the first second (the window's initial mouse capture on
+// macOS can deliver one giant delta that pitched the camera straight down), and no single-frame
+// jumps bigger than a hand can make.
+void AHearthVisitor::Turn(float Value)
+{
+	if (GetWorld()->GetTimeSeconds() < LookEnabledAt || FMath::Abs(Value) > 40.f) { return; }
+	AddControllerYawInput(Value);
+}
+
+void AHearthVisitor::LookUp(float Value)
+{
+	if (GetWorld()->GetTimeSeconds() < LookEnabledAt || FMath::Abs(Value) > 40.f) { return; }
+	AddControllerPitchInput(Value);
 }
 
 void AHearthVisitor::StartRun() { GetCharacterMovement()->MaxWalkSpeed = RunSpeed; }

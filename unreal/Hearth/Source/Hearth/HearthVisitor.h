@@ -24,6 +24,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Hearth") TObjectPtr<USpringArmComponent> Boom;
 	UPROPERTY(VisibleAnywhere, Category = "Hearth") TObjectPtr<UCameraComponent> Camera;
 
+	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	// Idle/walk driven from velocity (see HearthAnim.h)
@@ -36,4 +37,7 @@ protected:
 	void MoveRight(float Value);
 	void StartRun();
 	void StopRun();
+	void Turn(float Value);
+	void LookUp(float Value);
+	float LookEnabledAt = 0.f;   // ignore mouse deltas for the first moment (initial capture jumps)
 };
