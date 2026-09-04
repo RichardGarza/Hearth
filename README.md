@@ -43,4 +43,4 @@ cd brain
 
 Leave it running, go to another room.
 
-See `docs/SETUP.md` for the Unreal side.
+Docs: `PLAN.md` (status + roadmap), `docs/FEATURES.md` (what it does), `docs/ARCHITECTURE.md`, `docs/PROTOCOL.md`, `docs/SETUP.md`, `unreal/README.md`.

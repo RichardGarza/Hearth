@@ -1,31 +1,35 @@
 # Hearth — Project Plan
 
-> A world (Unreal Engine 5) populated by humans, each driven by a Claude agent, who must cooperate
-> to survive. They talk to each other out loud. This is the Matt Shumer "voices in the living room"
-> demo, built for real.
+> A small valley in Unreal Engine 5 where six people have to cooperate to survive: keep the fire lit,
+> build the shelter, feed each other. Some of them are driven by a language model. They talk out loud.
+> You walk among them and can talk to the AI ones. Inspired by Matt Shumer's "voices in the living
+> room" tweet.
 
-**Owner:** Richard Garza (rgactr@gmail.com)
-**Machine:** MacBook Air, Apple M3 Pro, macOS 26.6, Python 3.13, Node 20
+**Owner:** Richard Garza (rgactr@gmail.com) · **Repo:** https://github.com/RichardGarza/Hearth (private)
+**Machine:** MacBook Air, Apple M3 Pro, 18 GB, macOS 26.6 · Python 3.13 · UE 5.8.2 · Xcode 26.6 · Ollama
 **Started:** 2026-09-04
-**This file is the source of truth for status.** Update the checkboxes and the Decisions Log as work lands.
+**This file is the source of truth for status.** Update the checkboxes, the Decisions Log, and the Session Log as work lands.
+**What it does today, in detail:** `docs/FEATURES.md`. Architecture: `docs/ARCHITECTURE.md`. Wire protocol: `docs/PROTOCOL.md`.
 
 ---
 
-## 0. The one-paragraph design
+## 0. Where we are (2026-09-04, end of day)
 
-Two processes:
+**It runs.** `./play.sh` opens the game: a green valley with a forest, river, meadow, quarry, and a camp
+with a fire pit. Six mannequin characters (3 Manny, 3 Quinn) live their day: gather, eat, drink, tend the
+fire, build the shelter, sleep at night. Five are rule-driven and free. Jonah runs on a local 7B model
+(Ollama, no API cost, nothing leaves the Mac). You walk as a third-person character; near Jonah you press
+SPACE and type; he answers in character, out loud. ESC gives a menu with Quit and a look-sensitivity slider.
 
-1. **Brain** (`brain/`, Python) — the authoritative simulation. Owns time, weather, resources, agent
-   needs (hunger / thirst / warmth / energy / health), agent memory, and every decision. Each agent is a
-   Claude call: *perceive → think → say something (maybe) → act*. Speech is spoken aloud through
-   text-to-speech, one distinct voice per agent. Runs fully headless in a terminal, so the "voices in the
-   other room" effect works **before** Unreal is involved.
-2. **Unreal** (`unreal/`, UE5 C++) — a *renderer and body* for the same world. It connects to the brain
-   over a WebSocket, spawns a character per agent, walks them between locations, shows speech bubbles,
-   and reflects the world state (fire lit, shelter built, rain). Unreal never decides anything.
+**Not yet:** Claude driving all six (needs an API key and about $1–10/hour depending on model),
+real character models from Fab, fire/rain/night visuals, spatial voices.
 
-The split means every piece is testable on its own, Unreal can be swapped/skipped, and we can iterate on
-agent behavior fast (seconds) instead of at Unreal build speed (minutes).
+**Next up (suggested order):**
+1. Richard plays a session and reports: walk speed, sensitivity, Quit, how Jonah feels.
+2. Day/night lighting from sim time; campfire flame when lit; shelter mesh as it's built.
+3. Fab characters replacing the mannequins (Richard picks six).
+4. One paid Claude session with `--budget 3` to see the difference from the local model.
+5. Persistent memory across runs.
 
 ---
 
@@ -33,71 +37,60 @@ agent behavior fast (seconds) instead of at Unreal build speed (minutes).
 
 Legend: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked (see notes)
 
-### Phase 1 — Headless world + agents that talk (no Unreal)
+### Phase 1 — Headless world + agents that talk (no Unreal) — DONE except the paid run
 - [x] Folder structure, plan, docs
 - [x] World model: locations, resources, structures, time/weather, needs decay, death
 - [x] Action system: multi-tick actions with validation and resolution
-- [x] Agent personas (6 seeded characters with distinct voices)
+- [x] Agent personas (6 seeded characters with distinct voices and body types)
 - [x] Memory: rolling episodic memory + reflection summaries
-- [x] Scripted (rule-based) brain for offline testing — no API key needed
-- [x] Claude brain: cached system prompt, structured-output decisions, parallel per-tick calls
-- [x] Speech propagation: agents in the same location hear each other; addressed agents get to reply
-- [x] Text-to-speech: macOS `say` backend, per-agent voice, sequential queue
-- [x] Event log to `logs/` (JSONL) + readable console transcript
-- [x] CLI: `hearth run --brain scripted|claude --voice say|none`
-- [x] Tests for world rules and the scripted run
-- [x] Wire-format test: Claude request shape verified against the SDK with a fake API server (no tokens spent)
+- [x] Scripted (rule-based) brain — free, no key
+- [x] Claude brain: cached system prompt, structured-output decisions, parallel per-tick calls, `--budget` cap
+- [x] Ollama brain: local model, structured-output decisions, opener de-tic filter
+- [x] Mixed brains: `--ai-agents jonah` = one person on a model, rest scripted
+- [x] Speech propagation: same location hears; addressed agents reply; throttle against constant announcing
+- [x] Text-to-speech: macOS `say`, one voice per person, sequential queue, world pauses while a line plays
+- [x] Event log (JSONL) + console transcript
+- [x] Tests (19) including a fake-API wire-format test for the Claude request
 - [ ] **First real run with Claude** — needs `ANTHROPIC_API_KEY` (Richard)
-- [ ] Tune prompts after watching a few in-game days (cooperation, not monologues)
+- [ ] Tune prompts after watching a few in-game days with a real model
 
-### Phase 2 — WebSocket bridge
-- [x] Protocol spec (`docs/PROTOCOL.md`)
-- [x] WebSocket server broadcasting world snapshots + speech events
-- [x] Inbound commands (god-mode: trigger storm, drop supplies, whisper to an agent)
-- [x] Verified end-to-end with `brain/scripts/ws_probe.py` (init, snapshots, events, command round-trip)
-- [x] Reconnect verified (Unreal retries every 3 s until the brain is up; late join gets world_init + snapshot)
+### Phase 2 — WebSocket bridge — DONE
+- [x] Protocol spec (`docs/PROTOCOL.md`): world_init, snapshot, speech, event, reply; command, talk, talk_end
+- [x] Server broadcasting to any number of viewers; reconnect and late-join verified
+- [x] God-mode commands: storm, drop supplies, whisper to an agent
+- [x] Probe scripts: `brain/scripts/ws_probe.py`, `brain/scripts/talk_probe.py`
 
-### Phase 3 — Unreal Engine 5 world
-- [x] UE5 C++ project scaffold (uproject, module, targets, config)
-- [x] `HearthBridgeSubsystem` — WebSocket client, JSON parsing, event dispatch
-- [x] `AHearthAgent` — character with name + speech text, moves to location targets
-- [x] `AHearthLocation` — resource node / camp marker actors spawned from the world init message
-- [x] Install Unreal Engine (5.8.2 installed) and full Xcode (26.6) — done 2026-09-04
-- [x] Project compiles against UE 5.8 (`Build.sh HearthEditor Mac Development`), one fix needed
-- [x] Xcode Metal Toolchain component installed
-- [x] Valley map generated by script (`unreal/Hearth/Scripts/build_valley_map.py`): ground, sun, sky, fog, nav bounds, player start, game mode
-- [x] **End-to-end headless run passes** (`unreal/run_headless_test.sh`): bridge connects, 5 locations + 6 agents spawn, speech arrives in Unreal
-- [x] Watched it with a window: daylight, camp marker, mannequin bodies with names, characters walking between places (screenshot-verified 2026-09-04)
-- [x] Default body = engine tutorial mannequin with idle/walk animation (placeholder until Fab characters)
-- [x] Camera auto-frames camp on load; spectator WASD/mouse still works
-- [ ] Replace the placeholder mannequin with six distinct humanoid meshes. Sources Richard picked (2026-09-04):
-  - Fab, Epic Games seller, characters: https://www.fab.com/sellers/Epic%20Games?listing_types=3d-model&categories=characters-creatures — **prefer these**: free, already rigged to the UE5 skeleton, animations work without retargeting (Paragon heroes, City Sample crowd people, Mannequins)
-  - Sketchfab Blender tag: https://sketchfab.com/tags/blender — check license (CC-BY is fine), and expect to rig/retarget via IK Rig before they animate
-  - Six distinct-looking people, ideally matching the personas (ages 24 to 63, mixed)
-- [x] Placeholder world props generated by script: trees, river band, meadow bushes, quarry boulders, fire pit + logs, 8 flat-color materials
-- [ ] Visual state: campfire particle when lit, shelter mesh when built, rain when raining
-- [ ] Day/night via directional light driven by sim time
-- [ ] In-world audio: play TTS at the speaking character's position (spatialized) instead of on the Mac
-
-### Phase 3b — Talk to them (added 2026-09-04 at Richard's request)
-- [x] Ollama installed (Homebrew), `qwen2.5:7b` pulled; `OllamaBrain` with structured-output decisions and conversation
-- [x] Mixed brains: `--ai-agents jonah` puts one person on a real model, everyone else scripted (free)
-- [x] Brain: `talk` / `talk_end` / `reply` over the bridge; the character holds still while talking; 2-minute silence timeout
-- [x] Unreal: AI character marked with `[ AI ]` tag + cyan glow; "Press SPACE to talk to Jonah" prompt within 7 m; Slate chat box; Enter sends; ESC leaves; walking away closes it
-- [x] Richard tried it: talking works. Fixes from his feedback: walking third-person visitor (no flying), characters animate (velocity-driven clips), repeated "Hey, thanks" opener stripped, map filled with props, ESC menu with Quit
-- [x] `play.sh`: one command; closing the game (Quit or window) kills the brain so the voices stop
-- [x] Richard's round 2: look sensitivity way too high → default 0.35 + slider in the ESC menu (saved to Game.ini); "holding guns" → Epic's Manny/Quinn mannequins with unarmed idle/walk/jog (copied from engine template resources into `Content/Characters/Mannequins`, must keep that path); constant announcing → engine throttle (no line within 4 ticks unless replying), scripted talkativeness 0.35, local model told to mostly stay quiet
+### Phase 3 — Unreal Engine 5 world — PLAYABLE
+- [x] UE5 C++ project; compiles on 5.8.2 from the command line (`Build.sh`)
+- [x] Bridge subsystem, agent character, location actor, game mode, player controller, visitor pawn
+- [x] Valley map generated by `Scripts/build_valley_map.py`: ground, sun, sky, fog, nav bounds, ~200 props, 8 materials
+- [x] Headless smoke test `unreal/run_headless_test.sh` (connect, spawn, speech)
+- [x] Characters: Epic Manny/Quinn mannequins, unarmed idle/walk/jog driven from velocity (no AnimBP)
+- [x] Visitor: third-person walker, WASD + mouse, Shift to run, no flying; camera placed near camp on load
+- [x] ESC menu: Resume, Quit to Desktop, look-sensitivity slider (saved)
+- [x] `play.sh`: one command; when the game closes the brain is killed so the voices stop
 - [ ] Richard confirms: Quit closes the game, sensitivity feels right, animations look right
-- [ ] Optional: Jonah's replies spoken from his position in the world instead of the Mac speaker
-- [ ] `--budget` cap and Ollama documented in `docs/SETUP.md`
+- [ ] Day/night via directional light driven by sim time
+- [ ] Visual state: campfire flame + light when lit (light exists), shelter mesh growing with progress, rain
+- [ ] Replace mannequins with six distinct characters. Sources Richard picked (2026-09-04):
+  - Fab, Epic Games seller: https://www.fab.com/sellers/Epic%20Games?listing_types=3d-model&categories=characters-creatures — **prefer these** (rigged to the UE5 skeleton; our clips work as-is)
+  - Sketchfab: https://sketchfab.com/tags/blender — check license; needs retargeting
+- [ ] In-world audio: play each line at the speaking character's position instead of the Mac speaker
 
-### Phase 4 — Depth
-- [ ] Reflection/long-term memory that survives restarts (SQLite)
-- [ ] Relationships: trust/affinity between agents affects who they help
-- [ ] Crafting tree: tools → faster gathering; rope → better shelter
-- [ ] Emergent threats: illness, wolves at night, dwindling resources force migration
-- [ ] Observer mode: type a message into the sim as "a voice from the sky"
-- [ ] Better voices (ElevenLabs / OpenAI TTS backend behind the same interface)
+### Phase 3b — Talk to them — DONE
+- [x] Ollama installed (Homebrew), `qwen2.5:7b` pulled
+- [x] `[ AI ]` tag + cyan glow on model-driven characters
+- [x] "Press SPACE to talk to Jonah" within 7 m; chat box; Enter sends; ESC leaves; walking away closes
+- [x] Character holds still while talking, remembers the conversation, others nearby hear his side
+- [ ] Optional: spatial voice for replies
+
+### Phase 4 — Depth (not started)
+- [ ] Persistent memory across runs (SQLite): they remember yesterday
+- [ ] Relationships: trust/affinity affects who helps whom
+- [ ] Crafting: tools → faster gathering; rope → better shelter
+- [ ] Threats: illness, wolves at night, resources running out forcing a move
+- [ ] Observer voice from the sky (god-mode `whisper` exists; needs a UI)
+- [ ] Better voices (ElevenLabs / OpenAI TTS behind the same interface)
 - [ ] Cost dashboard: tokens per agent per in-game day
 
 ---
@@ -106,21 +99,22 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked (s
 
 | Item | Why | Status |
 |---|---|---|
-| `ANTHROPIC_API_KEY` exported in the shell (or `ant auth login`) | Real agents | **needed for Phase 1 final step** |
-| Unreal Engine 5.4+ via Epic Games Launcher | Phase 3 | **installed** (5.8.2) |
-| Full Xcode (not just Command Line Tools) | UE5 on Mac compiles C++ through Xcode | **installed** (26.6) |
-| Xcode Metal Toolchain component | Editor shader compilation | **installed** |
-| ~60 GB free disk | UE5 + Xcode | 100 GB free after cleanup |
+| `ANTHROPIC_API_KEY` | Claude-driven characters | not yet; local model in use instead |
+| Six character models from Fab | Replace mannequins | not yet |
+| Unreal Engine 5 + Xcode + Metal Toolchain | Editor and builds | **installed** |
+| Ollama + qwen2.5:7b | Free local AI | **installed** |
 
 ---
 
-## 3. Cost expectations (Claude)
+## 3. Cost expectations
 
-Default model is `claude-opus-5` at `effort: low` for per-tick decisions, with the system prompt
-(rules + persona) cached. Rough math for 6 agents deciding about every 30 real seconds:
-~700 calls/hour, ~1.5K uncached input + ~200 output tokens each → on the order of **$5–10 per hour**
-of continuous running. Override with `HEARTH_MODEL=claude-sonnet-5` for ~40% of that, or run with
-`--tick-seconds 10` to slow the world down. The scripted brain is free.
+| Mode | Cost | Quality |
+|---|---|---|
+| `--brain scripted` | $0 | Canned lines, rule decisions. Fine for building the world |
+| `--brain ollama --ai-agents jonah` (default in `play.sh`) | $0 | One real conversation partner; a bit generic |
+| `--brain claude --ai-agents jonah` | cents per session | Much better dialogue on one character |
+| `--brain claude` (all six, Sonnet 5) | ~$3–4/hour | Real emergent cooperation |
+| `--brain claude` (all six, Opus 5) | ~$5–10/hour | Best writing. Use `--budget N` |
 
 ---
 
@@ -128,25 +122,26 @@ of continuous running. Override with `HEARTH_MODEL=claude-sonnet-5` for ~40% of 
 
 | Date | Decision | Why |
 |---|---|---|
-| 2026-09-04 | Brain in Python, Unreal as a thin client | Iterate on agent behavior in seconds; Unreal not installed yet; headless demo works day one |
-| 2026-09-04 | Claude via official `anthropic` SDK, `claude-opus-5`, structured JSON decisions | SDK skill defaults; JSON schema guarantees every decision is a valid action |
-| 2026-09-04 | Speech = a field on the decision, not a separate call | One call per decision keeps cost and latency down; talk and act happen together like people do |
-| 2026-09-04 | Agents decide only when idle or when addressed | Prevents 6 agents chattering every tick; makes conversations turn-based naturally |
-| 2026-09-04 | Same-location = hearing range | Simple, and matches how the Unreal map will be laid out (named places, not open field) |
-| 2026-09-04 | macOS `say` for TTS in Phase 1 | Zero setup, distinct voices, runs offline. Swappable backend later |
-| 2026-09-04 | Project name "Hearth" | The campfire is the thing they must keep alive together |
-| 2026-09-04 | Unreal scale: `meters_to_units = 10` (sim km → ~100 m map); walk speed derived from `tick_seconds` | Human-scale map that fits a NavMesh; characters arrive when the sim says they arrive. Run the brain with `--tick-seconds 8` when Unreal is watching |
-| 2026-09-04 | Unreal C++ written blind (no engine installed) | One compile error on UE 5.8 (JSON map keys are `TSharedString` now); fixed same day |
+| 2026-09-04 | Brain in Python, Unreal as a thin client | Iterate on behavior in seconds; every layer testable alone |
+| 2026-09-04 | Claude via official SDK, `claude-opus-5`, structured JSON decisions | JSON schema guarantees every decision is a valid action |
+| 2026-09-04 | Speech = a field on the decision, not a separate call | Half the cost; talk and act happen together |
+| 2026-09-04 | Agents decide only when idle or when addressed | Natural turn-taking, fewer calls |
+| 2026-09-04 | Same-location = hearing range | Simple; matches named places on the map |
+| 2026-09-04 | macOS `say` for TTS | Zero setup, distinct voices, offline |
+| 2026-09-04 | Unreal scale `meters_to_units = 10`; walk speed derived from `tick_seconds` | ~100 m map; characters arrive when the sim says |
+| 2026-09-04 | **Local AI on one character, not Claude on six** (Richard) | No API bill while building; Claude is a flag flip later |
+| 2026-09-04 | Third-person walking visitor, not a flying spectator (Richard) | "He's walking, shouldn't go vertical" |
+| 2026-09-04 | Epic Manny/Quinn mannequins + clips, no AnimBP | Engine tutorial mannequin only had a rifle-walk; AnimBPs cast to their own BP class |
+| 2026-09-04 | Chatter throttle in the engine, not just in prompts | Works for every brain; small models ignore "be quiet" |
+| 2026-09-04 | Logs never tracked; AndroidFileServer plugin disabled; pre-commit secret grep | Two secret-scanner incidents in one day, both from files Unreal wrote itself |
 
 ---
 
 ## 5. Open questions
 
-- ~~Epic Online Services block in the engine ini~~ Removed 2026-09-04 and scrubbed from git history before the first push. If EOS is ever wanted, keep credentials out of the repo (Richard's call).
-
-- How many agents for the first Unreal build? 6 is the persona count; 4 keeps costs lower.
-- Should the world be persistent across runs (agents remember yesterday)? Leaning yes, Phase 4.
-- Do we want the user to be able to walk around as a 7th human and talk to them? (Great demo. Phase 4+.)
+- Persistent world across runs (they remember yesterday)? Leaning yes, Phase 4.
+- Should the other five also become AI once Fab characters are in, or stay scripted for cost?
+- Spatial voices: Unreal plays the audio (needs TTS to produce files) vs. Mac speaker as now.
 
 ---
 
@@ -154,17 +149,18 @@ of continuous running. Override with `HEARTH_MODEL=claude-sonnet-5` for ~40% of 
 
 | Date | What landed |
 |---|---|
-| 2026-09-04 | Everything in Phase 1 except the live Claude run; Phase 2 server + probe; Phase 3 C++ scaffold (uncompiled). 14 tests green. Git initialized, committed. |
-| 2026-09-04 (night) | Feedback round: walking visitor, ESC menu, props, T-pose fix (single-node instance reports playing with no clip), mouse first-frame jump guard, Manny/Quinn bodies (assets reference `/Game/Characters/Mannequins/...`), sensitivity slider, chatter throttle. 19 tests. |
-| 2026-09-04 (evening) | Richard asked whether AI/talking is needed at all; decided: local AI on one character you can walk up to and type with. Built Ollama brain, mixed routing, talk protocol, Unreal Space-to-talk dialogue. 17 tests green. |
-| 2026-09-04 (later) | Xcode 26.6 + UE 5.8.2 installed. Module compiles (1 fix). Metal Toolchain installed. Valley map built by Python commandlet. Headless brain→Unreal run passes all checks. Unreal ini gotcha: `//` in a value is a comment; quote URLs. Python `unreal.Rotator` positional order is (roll, pitch, yaw). Bodies: engine mannequin. Camera auto-frames camp. |
+| 2026-09-04 morning | Plan, docs, Python brain (world, agents, voices, bridge), Unreal C++ scaffold written blind. 14 tests. Git init. |
+| 2026-09-04 afternoon | Xcode + UE 5.8 + Metal Toolchain installed. Module compiles. Valley map via Python commandlet. Headless brain→Unreal run passes. Mannequin bodies. GitHub repo (private). EOS secret scrubbed from history. |
+| 2026-09-04 evening | Richard: "do we need AI/talking?" → local AI on one character. Ollama brain, mixed routing, talk protocol, SPACE-to-talk dialogue in Unreal. 17 tests. |
+| 2026-09-04 night | Richard's feedback rounds: walking visitor, ESC menu + Quit, props, T-pose fix, mouse jump guard, Manny/Quinn bodies, sensitivity slider, chatter throttle, `play.sh`. 19 tests. Second scanner incident (editor-written token) purged. |
 
 ---
 
 ## 7. How to work on this (for future sessions)
 
-1. Read this file first. Check the status boxes.
-2. `cd brain && .venv/bin/python -m hearth run --brain scripted --voice none --ticks 60 --tick-seconds 0` runs the world in a second and prints a transcript. If that breaks, fix it before anything else.
-3. `.venv/bin/pytest` should be green.
-4. Pick the next unchecked item in the lowest incomplete phase. Update this file when it lands.
-5. Architecture details live in `docs/ARCHITECTURE.md`. Wire protocol in `docs/PROTOCOL.md`.
+1. Read this file first. Section 0 says where we are; section 1 says what's next.
+2. `cd brain && .venv/bin/python -m hearth run --brain scripted --voice none --ticks 60 --tick-seconds 0` runs the world in a second. If that breaks, fix it before anything else.
+3. `cd brain && .venv/bin/pytest` should be green (19).
+4. Unreal: `unreal/README.md` has the command-line build, map regen, and headless test. Never open the editor just to check something a screenshot of `./play.sh` can show.
+5. Before every commit: `git status` and look for files Unreal wrote on its own. Push after every commit.
+6. Update this file when something lands: checkbox, decision, session log.
