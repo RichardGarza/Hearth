@@ -21,15 +21,17 @@ cd brain
 
 You'll hear the six of them start talking.
 
-## Free local AI on one character (Ollama)
+## Play (Unreal + local AI on one character)
 
 ```bash
-cd brain
-.venv/bin/python -m hearth run --brain ollama --ai-agents jonah --voice say --tick-seconds 6
+./play.sh
 ```
-Jonah thinks and talks with a local model (qwen2.5:7b via Ollama, no API key, nothing leaves the Mac).
-Everyone else is scripted. In Unreal he's marked `[ AI ]` with a cyan glow: fly up to him, press
-**SPACE**, type, **ESC** to walk away. Needs `ollama serve` running (installed via Homebrew).
+Starts the brain (Jonah on a local model via Ollama, everyone else scripted, voices on) and opens the
+game. You walk as a third-person character: **WASD** + mouse, **Shift** to run. Jonah is marked
+`[ AI ]` with a cyan glow; walk up to him, press **SPACE**, type, **ESC** to walk away. **ESC**
+anywhere else opens the menu; **Quit** closes the game *and* the brain, so the voices stop.
+
+`./play.sh --brain scripted` runs with no AI at all.
 
 ## Real agents
 

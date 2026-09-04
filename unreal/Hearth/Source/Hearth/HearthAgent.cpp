@@ -9,6 +9,7 @@
 #include "Navigation/PathFollowingComponent.h"
 #include "TimerManager.h"
 #include "UObject/ConstructorHelpers.h"
+#include "HearthAnim.h"
 
 AHearthAgent::AHearthAgent()
 {
@@ -22,18 +23,18 @@ AHearthAgent::AHearthAgent()
 
 	// Default body: the mannequin that ships with the engine, so people are visible before any
 	// Fab/Sketchfab characters are imported. Override in a Blueprint subclass (BP_HearthAgent).
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> BodyMesh(TEXT("/Engine/Tutorial/SubEditors/TutorialAssets/Character/TutorialTPP.TutorialTPP"));
-	static ConstructorHelpers::FClassFinder<UAnimInstance> BodyAnim(TEXT("/Engine/Tutorial/SubEditors/TutorialAssets/Character/TutorialTPP_AnimBlueprint"));
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> BodyMesh(HearthAnim::BodyMeshPath);
+	static ConstructorHelpers::FObjectFinder<UAnimSequence> IdleClip(HearthAnim::IdlePath);
+	static ConstructorHelpers::FObjectFinder<UAnimSequence> WalkClip(HearthAnim::WalkPath);
 	if (BodyMesh.Succeeded())
 	{
 		GetMesh()->SetSkeletalMesh(BodyMesh.Object);
 		GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -88.f));
 		GetMesh()->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
-		if (BodyAnim.Succeeded())
-		{
-			GetMesh()->SetAnimInstanceClass(BodyAnim.Class);
-		}
+		GetMesh()->SetAnimationMode(EAnimationMode::AnimationSingleNode);
 	}
+	IdleAnim = IdleClip.Succeeded() ? IdleClip.Object : nullptr;
+	WalkAnim = WalkClip.Succeeded() ? WalkClip.Object : nullptr;
 
 	NameLabel = CreateDefaultSubobject<UTextRenderComponent>(TEXT("NameLabel"));
 	NameLabel->SetupAttachment(RootComponent);
@@ -169,9 +170,15 @@ void AHearthAgent::FaceCamera(UTextRenderComponent* Label) const
 	}
 }
 
+void AHearthAgent::UpdateLocomotionAnim()
+{
+	HearthAnim::Update(this, IdleAnim, WalkAnim, bAnimWalking);
+}
+
 void AHearthAgent::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+	UpdateLocomotionAnim();
 	FaceCamera(NameLabel);
 	FaceCamera(SpeechLabel);
 	FaceCamera(StatusLabel);

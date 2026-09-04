@@ -7,6 +7,7 @@
 
 class USpringArmComponent;
 class UCameraComponent;
+class UAnimSequence;
 
 UCLASS()
 class HEARTH_API AHearthVisitor : public ACharacter
@@ -23,7 +24,14 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Hearth") TObjectPtr<USpringArmComponent> Boom;
 	UPROPERTY(VisibleAnywhere, Category = "Hearth") TObjectPtr<UCameraComponent> Camera;
 
+	virtual void Tick(float DeltaSeconds) override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
+	// Idle/walk driven from velocity (see HearthAnim.h)
+	UPROPERTY() TObjectPtr<UAnimSequence> IdleAnim;
+	UPROPERTY() TObjectPtr<UAnimSequence> WalkAnim;
+	bool bAnimWalking = false;
+	void UpdateLocomotionAnim();
+
 	void MoveForward(float Value);
 	void MoveRight(float Value);
 	void StartRun();

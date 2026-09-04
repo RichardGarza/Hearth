@@ -5,10 +5,11 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "UObject/ConstructorHelpers.h"
+#include "HearthAnim.h"
 
 AHearthVisitor::AHearthVisitor()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 88.f);
 
 	// look with the mouse, body turns to face where you walk
@@ -33,18 +34,29 @@ AHearthVisitor::AHearthVisitor()
 	Camera->SetupAttachment(Boom, USpringArmComponent::SocketName);
 	Camera->bUsePawnControlRotation = false;
 
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> BodyMesh(TEXT("/Engine/Tutorial/SubEditors/TutorialAssets/Character/TutorialTPP.TutorialTPP"));
-	static ConstructorHelpers::FClassFinder<UAnimInstance> BodyAnim(TEXT("/Engine/Tutorial/SubEditors/TutorialAssets/Character/TutorialTPP_AnimBlueprint"));
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> BodyMesh(HearthAnim::BodyMeshPath);
+	static ConstructorHelpers::FObjectFinder<UAnimSequence> IdleClip(HearthAnim::IdlePath);
+	static ConstructorHelpers::FObjectFinder<UAnimSequence> WalkClip(HearthAnim::WalkPath);
 	if (BodyMesh.Succeeded())
 	{
 		GetMesh()->SetSkeletalMesh(BodyMesh.Object);
 		GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -88.f));
 		GetMesh()->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
-		if (BodyAnim.Succeeded())
-		{
-			GetMesh()->SetAnimInstanceClass(BodyAnim.Class);
-		}
+		GetMesh()->SetAnimationMode(EAnimationMode::AnimationSingleNode);
 	}
+	IdleAnim = IdleClip.Succeeded() ? IdleClip.Object : nullptr;
+	WalkAnim = WalkClip.Succeeded() ? WalkClip.Object : nullptr;
+}
+
+void AHearthVisitor::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	UpdateLocomotionAnim();
+}
+
+void AHearthVisitor::UpdateLocomotionAnim()
+{
+	HearthAnim::Update(this, IdleAnim, WalkAnim, bAnimWalking);
 }
 
 void AHearthVisitor::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

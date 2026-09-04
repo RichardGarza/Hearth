@@ -11,6 +11,8 @@
 #include "GameFramework/Pawn.h"
 #include "Styling/CoreStyle.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "HAL/PlatformMisc.h"
+#include "TimerManager.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Input/SEditableTextBox.h"
 #include "Widgets/Layout/SBorder.h"
@@ -270,7 +272,10 @@ void AHearthPlayerController::CloseMenu()
 void AHearthPlayerController::QuitGame()
 {
 	UE_LOG(LogHearth, Log, TEXT("Quit requested from menu"));
-	UKismetSystemLibrary::QuitGame(this, this, EQuitPreference::Quit, false);
+	UKismetSystemLibrary::QuitGame(this, this, EQuitPreference::Quit, true);
+	// if the console route didn't take (packaged/-game edge cases), force the process to exit
+	FTimerHandle H;
+	GetWorldTimerManager().SetTimer(H, []() { FPlatformMisc::RequestExit(false); }, 1.0f, false);
 }
 
 FReply AHearthPlayerController::OnResumeClicked()

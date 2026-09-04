@@ -8,6 +8,7 @@
 
 class UTextRenderComponent;
 class UPointLightComponent;
+class UAnimSequence;
 
 UCLASS()
 class HEARTH_API AHearthAgent : public ACharacter
@@ -49,4 +50,10 @@ protected:
 
 	void ClearSpeech();
 	void FaceCamera(UTextRenderComponent* Label) const;
+	// Idle/walk driven from velocity (see HearthAnim.h)
+	UPROPERTY() TObjectPtr<UAnimSequence> IdleAnim;
+	UPROPERTY() TObjectPtr<UAnimSequence> WalkAnim;
+	bool bAnimWalking = false;
+	void UpdateLocomotionAnim();
+
 };
