@@ -20,8 +20,8 @@ Brain flags: `--brain claude|ollama|scripted`, `--ai-agents jonah,mara`, `--voic
 
 ## In the game
 
-**You** are a third-person mannequin. WASD walk, mouse look, Shift run, **Space** jump. You start a short
-walk from camp. No flying. Gravity applies.
+**You** are a third-person mannequin. WASD walk, mouse look, Shift run, **Space** jump (tap for a hop, hold for full
+height; falls a little heavier than it rises). You start a short walk from camp. No flying.
 
 **ESC** opens the menu: Resume, Quit to Desktop, look-sensitivity slider shown as 1–10 in half steps (persists). ESC again resumes. Quit closes the game; the brain notices the disconnect and exits too.
 

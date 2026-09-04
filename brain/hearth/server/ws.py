@@ -88,5 +88,12 @@ class BridgeServer:
         finally:
             self.clients.discard(ws)
             if self.engine.cfg.exit_with_client and not self.clients:
-                log.info("viewer disconnected; stopping (exit-with-client)")
-                self.engine.stopped = True
+                asyncio.create_task(self._stop_if_still_alone(grace=8.0))
+
+    async def _stop_if_still_alone(self, grace: float) -> None:
+        """A dying old game window can connect-and-drop while the new one is still starting; only stop if
+        nobody comes back within the grace period."""
+        await asyncio.sleep(grace)
+        if not self.clients:
+            log.info("no viewer for %.0fs; stopping (exit-with-client)", grace)
+            self.engine.stopped = True

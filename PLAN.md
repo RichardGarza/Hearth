@@ -71,6 +71,7 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked (s
 - [x] `play.sh`: one command; when the game closes the brain is killed so the voices stop
 - [x] Round 3 (Richard): sensitivity 1–10 slider in 0.5 steps (bigger, styled); world ringed by a tree wall (no drop-off); layered conifers; you gather at places (10 s) and auto-drop at camp; Jonah in a forest-green suit; chat box keeps focus after Enter; launcher kill bug fixed (process is `Python` not `python`) + brain exits when the game disconnects; the AI's instructions moved to editable files in `brain/prompts/`
 - [x] Round 4: ENTER talks, SPACE jumps, `hump` cheat (6 s dance), look guard armed on first window focus (camera was spinning toward the quarry on start), carry HUD shows from the start
+- [x] Jump tuned: +15% height, heavier fall, hold-to-jump-higher. Brain exit-on-disconnect now waits 8 s (a dying old window could trip it)
 - [ ] Richard confirms rounds 3–4 in play
 - [ ] Photorealistic trees: needs real assets — install Quixel/Megascans trees from Fab (free with an Epic account) and point `build_valley_map.py` at them
 - [ ] Day/night via directional light driven by sim time

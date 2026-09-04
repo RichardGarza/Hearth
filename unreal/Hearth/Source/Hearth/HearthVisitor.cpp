@@ -22,9 +22,12 @@ AHearthVisitor::AHearthVisitor()
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 540.f, 0.f);
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
-	GetCharacterMovement()->JumpZVelocity = 480.f;    // SPACE jumps (when not next to an AI person)
-	GetCharacterMovement()->AirControl = 0.25f;
-	GetCharacterMovement()->GravityScale = 1.f;
+	// Jump feel: ~15% higher than the stock 480 (height ~ v^2), rise at normal gravity, fall ~10% faster
+	// (see Tick: gravity scale switches to FallGravity once we're heading down)
+	GetCharacterMovement()->JumpZVelocity = 515.f;    // SPACE jumps
+	GetCharacterMovement()->AirControl = 0.35f;
+	GetCharacterMovement()->GravityScale = RiseGravity;
+	JumpMaxHoldTime = 0.12f;  // ACharacter property: tap = shorter hop, hold = full height
 
 	Boom = CreateDefaultSubobject<USpringArmComponent>(TEXT("Boom"));
 	Boom->SetupAttachment(RootComponent);
@@ -58,6 +61,11 @@ void AHearthVisitor::Tick(float DeltaSeconds)
 	{
 		bSeenFocus = true;
 		LookEnabledAt = Now + 0.75f;
+	}
+	// asymmetric gravity: heavier on the way down so the landing feels grounded, not floaty
+	if (UCharacterMovementComponent* Move = GetCharacterMovement())
+	{
+		Move->GravityScale = (Move->IsFalling() && Move->Velocity.Z < 0.f) ? FallGravity : RiseGravity;
 	}
 	if (DanceUntil > 0.f)
 	{

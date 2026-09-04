@@ -19,6 +19,8 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Hearth") float WalkSpeed = 380.f;
 	UPROPERTY(EditAnywhere, Category = "Hearth") float RunSpeed = 720.f;
+	UPROPERTY(EditAnywhere, Category = "Hearth") float RiseGravity = 1.0f;
+	UPROPERTY(EditAnywhere, Category = "Hearth") float FallGravity = 1.25f;   // ~10% shorter fall time
 
 	/** Cheat: dance and hump the air for a few seconds. */
 	UFUNCTION(BlueprintCallable, Category = "Hearth") void StartDance(float Seconds);
